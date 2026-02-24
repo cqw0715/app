@@ -12,29 +12,34 @@ from typing import List, Tuple, Optional, Union
 from tqdm import tqdm
 
 # ==========================================
+# 强制使用 CPU（无 GPU 环境）
+# ==========================================
+device = torch.device('cpu')
+st.info("ℹ️ 当前运行在 CPU 模式（无 GPU）")
+
+# ==========================================
+# 安全的 Mamba 实现：始终使用替代版（因 mamba_ssm 不支持 CPU）
+# ==========================================
+class Mamba(nn.Module):
+    """纯 PyTorch 实现的 Mamba 替代模块（仅用于 CPU 兼容）"""
+    def __init__(self, d_model, d_state=16, d_conv=4, expand=2):
+        super().__init__()
+        self.d_model = d_model
+        self.norm = nn.LayerNorm(d_model)
+
+    def forward(self, x):
+        return self.norm(x)
+
+
+# ==========================================
 # 模型架构定义（与训练时保持一致）
 # ==========================================
 import torch.nn as nn
 import torch.nn.functional as F
 
-try:
-    from mamba_ssm import Mamba
-except ImportError:
-    st.warning("Mamba模块未安装，将使用替代实现")
-
-    # 简单的替代实现，仅用于演示
-    class Mamba(nn.Module):
-        def __init__(self, d_model, d_state=16, d_conv=4, expand=2):
-            super().__init__()
-            self.d_model = d_model
-            self.norm = nn.LayerNorm(d_model)
-
-        def forward(self, x):
-            return self.norm(x)
-
 
 class CNNBranch(nn.Module):
-    def __init__(self, input_dim=480, num_classes=2):  # 修改 input_dim
+    def __init__(self, input_dim=480, num_classes=2):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(input_dim, 256),
@@ -60,7 +65,7 @@ class CNNBranch(nn.Module):
 
 
 class TransformerBranch(nn.Module):
-    def __init__(self, input_dim=480, d_model=256, nhead=8, num_classes=2):  # 修改 input_dim
+    def __init__(self, input_dim=480, d_model=256, nhead=8, num_classes=2):
         super().__init__()
         self.embedding = nn.Linear(input_dim, d_model)
         layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, batch_first=True, dropout=0.2)
@@ -92,7 +97,7 @@ class MambaBranch(nn.Module):
 
 
 class MutualLearningModel(nn.Module):
-    def __init__(self, input_dim=480, num_classes=2, embed_dim=128):  # 修改 input_dim
+    def __init__(self, input_dim=480, num_classes=2, embed_dim=128):
         super().__init__()
         self.cnn = CNNBranch(input_dim, num_classes)
         self.trans = TransformerBranch(input_dim, num_classes=num_classes)
@@ -164,65 +169,38 @@ class MutualLearningModel(nn.Module):
 
 
 # ==========================================
-# 特征提取类（修复缓存问题）
+# 特征提取类（CPU-only，移除 CUDA 相关）
 # ==========================================
 class ESMFeatureExtractor:
     def __init__(self):
-        self.gpu_model = None
-        self.gpu_batch_converter = None
-        self.cpu_model = None
-        self.cpu_batch_converter = None
-        self.device = None
+        self.model = None
+        self.batch_converter = None
         self._initialize_models()
 
     def _initialize_models(self):
+        print("🖥️ 加载 ESM-2 35M 模型（CPU 模式）...")
         try:
-            if torch.cuda.is_available():
-                print("🚀 尝试加载GPU模型（ESM-2 35M）...")
-                self.gpu_model, alphabet = esm.pretrained.esm2_t12_35M_UR50D()  # 替换为 35M 模型
-                self.gpu_device = torch.device('cuda')
-                self.gpu_model = self.gpu_model.to(self.gpu_device)
-                self.gpu_batch_converter = alphabet.get_batch_converter()
-                self.device = self.gpu_device
-                print("✅ GPU模型加载成功")
+            self.model, alphabet = esm.pretrained.esm2_t12_35M_UR50D()  # 正确模型名
+            self.model = self.model.to(device)
+            self.model.eval()
+            self.batch_converter = alphabet.get_batch_converter()
+            print("✅ ESM 模型加载成功")
         except Exception as e:
-            print(f"❌ GPU模型加载失败: {e}")
-        try:
-            print("🖥️ 加载CPU模型作为备用...")
-            self.cpu_model, alphabet = esm.pretrained.esm2_t12_35M_UR50D()  # 替换为 35M 模型
-            self.cpu_device = torch.device('cpu')
-            self.cpu_model = self.cpu_model.to(self.cpu_device)
-            self.cpu_batch_converter = alphabet.get_batch_converter()
-            if self.device is None:
-                self.device = self.cpu_device
-            print("✅ CPU模型加载成功")
-        except Exception as e:
-            print(f"❌ CPU模型加载失败: {e}")
+            print(f"❌ 模型加载失败: {e}")
             raise
 
-    def _extract_batch_features(self, batch_data, use_gpu=True):
-        try:
-            model = self.gpu_model if use_gpu and self.gpu_model else self.cpu_model
-            batch_converter = self.gpu_batch_converter if use_gpu and self.gpu_model else self.cpu_batch_converter
-            device = self.gpu_device if use_gpu and self.gpu_model else self.cpu_device
-
-            _, _, batch_tokens = batch_converter(batch_data)
-            batch_tokens = batch_tokens.to(device)
-            with torch.no_grad():
-                results = model(batch_tokens, repr_layers=[6], return_contacts=False)  # 修改为第6层
-                token_representations = results["representations"][6]  # 修改为第6层
-            seq_lengths = (batch_tokens != model.alphabet.padding_idx).sum(1)
-            batch_features = [token_representations[i, :seq_lengths[i]].mean(0).cpu().numpy() for i in
-                              range(token_representations.size(0))]
-
-            del batch_tokens, results
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-            return batch_features
-        except RuntimeError as e:
-            if "CUDA out of memory" in str(e) and use_gpu:
-                return self._extract_batch_features(batch_data, use_gpu=False)
-            raise
+    def _extract_batch_features(self, batch_data):
+        _, _, batch_tokens = self.batch_converter(batch_data)
+        batch_tokens = batch_tokens.to(device)
+        with torch.no_grad():
+            results = self.model(batch_tokens, repr_layers=[12], return_contacts=False)  # 第12层
+            token_representations = results["representations"][12]
+        seq_lengths = (batch_tokens != self.model.alphabet.padding_idx).sum(1)
+        batch_features = [
+            token_representations[i, :seq_lengths[i]].mean(0).cpu().numpy()
+            for i in range(token_representations.size(0))
+        ]
+        return batch_features
 
     def extract_features(self, sequences, cache_path=None, batch_size=1):
         if cache_path and os.path.exists(cache_path):
@@ -235,7 +213,6 @@ class ESMFeatureExtractor:
             batch = sequences[i:i + batch_size]
             batch_data = [(str(idx), seq) for idx, seq in enumerate(batch)]
             features.extend(self._extract_batch_features(batch_data))
-
             if (i // batch_size) % 10 == 0:
                 print(f"📊 进度: {min(i + batch_size, len(sequences))}/{len(sequences)}")
 
@@ -247,40 +224,30 @@ class ESMFeatureExtractor:
 
 
 # ==========================================
-# 缓存函数 - 正确使用st.cache_resource
+# 缓存函数
 # ==========================================
 @st.cache_resource
 def get_feature_extractor():
-    """获取特征提取器的缓存实例"""
     return ESMFeatureExtractor()
 
 
 @st.cache_resource
 def load_model_and_scaler():
-    """加载预训练模型和标准化器"""
-    with st.spinner("🔄 正在加载预训练模型..."):
-        # 检查模型文件是否存在
-        model_path = "best_mutual_learning_model.pth"
-        if not os.path.exists(model_path):
-            st.error(f"❌ 模型文件未找到: {model_path}")
-            st.info("请确保模型文件与应用在同一目录下")
-            return None, None, None
+    model_path = "best_mutual_learning_model.pth"
+    if not os.path.exists(model_path):
+        st.error(f"❌ 模型文件未找到: {model_path}")
+        st.info("请确保模型文件与应用在同一目录下")
+        return None, None, device
 
-        # 加载模型 - 修复安全警告
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    with st.spinner("🔄 正在加载预训练模型..."):
         try:
-            # 尝试使用 weights_only=True (PyTorch 2.1+)
             checkpoint = torch.load(model_path, map_location=device, weights_only=False)
         except TypeError:
-            # 旧版本PyTorch不支持weights_only参数
             checkpoint = torch.load(model_path, map_location=device)
 
-        # 初始化模型
-        model = MutualLearningModel(input_dim=480, num_classes=2).to(device)  # 修改 input_dim
+        model = MutualLearningModel(input_dim=480, num_classes=2).to(device)
         model.load_state_dict(checkpoint['model_state_dict'])
         model.eval()
-
-        # 获取标准化器
         scaler = checkpoint['scaler']
         return model, scaler, device
 
@@ -289,7 +256,6 @@ def load_model_and_scaler():
 # 应用主函数
 # ==========================================
 def main():
-    # 页面配置
     st.set_page_config(
         page_title="猪肠道病毒识别系统",
         page_icon="🐷",
@@ -297,7 +263,6 @@ def main():
         initial_sidebar_state="expanded"
     )
 
-    # 应用标题和说明
     st.title("🐷 猪肠道病毒识别系统")
     st.markdown("""
     <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
@@ -311,10 +276,8 @@ def main():
     </div>
     """, unsafe_allow_html=True)
 
-    # 侧边栏
     with st.sidebar:
         st.header("⚙️ 系统设置")
-        st.markdown("### 模型信息")
         st.info("深度学习融合模型\n(ESM-2 + CNN + Transformer + Mamba)")
         st.markdown("### 使用说明")
         st.markdown("""
@@ -324,41 +287,34 @@ def main():
         """)
         st.markdown("### 注意事项")
         st.warning("""
-        - 仅支持标准氨基酸字符
-        - 序列长度建议在50-2000个氨基酸之间
-        - GPU加速可显著提升处理速度
+        - 仅支持标准氨基酸字符 (ACDEFGHIKLMNPQRSTVWY)
+        - 序列长度建议在10-5000个氨基酸之间
+        - 当前运行在 CPU 模式，处理速度较慢
         """)
 
-    # 加载模型和特征提取器
-    model, scaler, device = load_model_and_scaler()
+    model, scaler, _ = load_model_and_scaler()
     feature_extractor = get_feature_extractor()
 
     if model is None or feature_extractor is None:
         st.stop()
 
-    # 预测函数
     def predict_sequences(sequences: List[str]) -> List[dict]:
-        """对序列列表进行预测"""
         if not sequences:
             return []
 
-        # 提取特征
         with st.spinner(f"🧬 正在提取 {len(sequences)} 条序列的特征..."):
             features = feature_extractor.extract_features(sequences)
 
-        # 标准化
         features_scaled = scaler.transform(features)
         features_tensor = torch.FloatTensor(features_scaled).to(device)
 
-        # 预测
         results = []
         with torch.no_grad():
             _, _, _, o_fused = model(features_tensor)
             probs = F.softmax(o_fused, dim=1)
             preds = torch.argmax(probs, dim=1).cpu().numpy()
-            confidences = probs[:, 1].cpu().numpy()  # 非猪肠道病毒的概率
+            confidences = probs[:, 1].cpu().numpy()  # 非猪肠道病毒概率
 
-        # 生成结果
         for i, (seq, pred, conf) in enumerate(zip(sequences, preds, confidences)):
             result = {
                 'sequence_id': f"seq_{i + 1}",
@@ -371,7 +327,6 @@ def main():
             results.append(result)
         return results
 
-    # 主界面 - 两种输入方式
     input_option = st.radio("选择输入方式", ["单序列预测", "批量CSV预测"], horizontal=True)
 
     if input_option == "单序列预测":
@@ -386,7 +341,6 @@ def main():
             if not sequence_input.strip():
                 st.warning("⚠️ 请输入有效的蛋白质序列")
             else:
-                # 预处理序列 - 只保留标准氨基酸
                 sequence = ''.join(filter(str.isalpha, sequence_input.strip().upper()))
                 sequence = ''.join([aa for aa in sequence if aa in 'ACDEFGHIKLMNPQRSTVWY'])
                 if len(sequence) < 10:
@@ -394,20 +348,11 @@ def main():
                 elif len(sequence) > 5000:
                     st.error("❌ 序列长度过长，最大支持5000个氨基酸")
                 else:
-                    # 进行预测
                     results = predict_sequences([sequence])
-
-                    # 显示结果
-                    st.subheader("📊 预测结果")
                     result = results[0]
 
-                    # 使用卡片式布局展示结果
-                    if result['prediction'] == 0:
-                        color = "#ff4b4b"  # 红色表示猪肠道病毒
-                        emoji = "🐷"
-                    else:
-                        color = "#1f77b4"  # 蓝色表示非猪肠道病毒
-                        emoji = "🦠"
+                    color = "#ff4b4b" if result['prediction'] == 0 else "#1f77b4"
+                    emoji = "🐷" if result['prediction'] == 0 else "🦠"
 
                     st.markdown(f"""
                     <div style="background-color: {color}15; border-left: 4px solid {color}; padding: 15px; border-radius: 0 8px 8px 0; margin: 15px 0;">
@@ -417,7 +362,6 @@ def main():
                     </div>
                     """, unsafe_allow_html=True)
 
-                    # 显示详细置信度
                     st.subheader("📈 置信度分析")
                     col1, col2 = st.columns(2)
                     with col1:
@@ -425,7 +369,6 @@ def main():
                     with col2:
                         st.metric("非猪肠道病毒概率", f"{result['confidence']:.2%}")
 
-                    # 可视化置信度
                     import matplotlib.pyplot as plt
                     fig, ax = plt.subplots(figsize=(8, 2))
                     classes = ['PEV', 'non-PEV']
@@ -437,11 +380,10 @@ def main():
                     ax.bar_label(bars, fmt='%.2f', padding=3)
                     st.pyplot(fig)
 
-                    # 显示完整序列
                     with st.expander("📋 查看完整序列"):
                         st.code(result['full_sequence'])
 
-    else:  # 批量CSV预测
+    else:
         st.subheader("📁 上传CSV文件")
         st.markdown("""
         请上传包含蛋白质序列的CSV文件，文件需包含`Sequence`列。
@@ -456,49 +398,39 @@ def main():
 
         if uploaded_file is not None:
             try:
-                # 读取CSV
                 df = pd.read_csv(uploaded_file)
                 if 'Sequence' not in df.columns:
                     st.error("❌ CSV文件中缺少'Sequence'列")
                 else:
                     st.success(f"✅ 成功加载 {len(df)} 条序列")
 
-                    # 预览数据
                     with st.expander("🔍 数据预览"):
                         st.dataframe(df.head())
 
-                    # 预处理序列
                     sequences = []
                     valid_indices = []
                     for idx, row in df.iterrows():
                         seq = str(row['Sequence']).strip().upper()
-                        # 仅保留标准氨基酸
                         seq_clean = ''.join([aa for aa in seq if aa in 'ACDEFGHIKLMNPQRSTVWY'])
-                        if len(seq_clean) >= 10 and len(seq_clean) <= 5000:
+                        if 10 <= len(seq_clean) <= 5000:
                             sequences.append(seq_clean)
                             valid_indices.append(idx)
 
-                    st.info(f"ℹ️ 有效序列: {len(sequences)}/{len(df)} (过滤了过短、过长或无效字符的序列)")
+                    st.info(f"ℹ️ 有效序列: {len(sequences)}/{len(df)}")
 
                     if st.button("🚀 开始批量预测", type="primary"):
                         if not sequences:
                             st.warning("⚠️ 没有有效的序列可以预测")
                         else:
-                            # 进行预测
                             with st.spinner(f"🧠 正在预测 {len(sequences)} 条序列..."):
                                 start_time = time.time()
                                 results = predict_sequences(sequences)
                                 elapsed_time = time.time() - start_time
 
-                            # 创建结果DataFrame
                             results_df = pd.DataFrame(results)
-                            results_df = results_df[['sequence_id', 'sequence', 'prediction', 'confidence', 'class_name']]
-
-                            # 与原始数据合并
                             result_indices = pd.Series(valid_indices, name='original_index')
                             results_with_index = pd.concat([result_indices, results_df], axis=1)
 
-                            # 创建完整的输出
                             output_df = df.copy()
                             output_df['Prediction'] = "无效序列"
                             output_df['Class'] = "无效序列"
@@ -509,26 +441,21 @@ def main():
                                 output_df.at[idx, 'Class'] = row['class_name']
                                 output_df.at[idx, 'Confidence'] = row['confidence']
 
-                            # 显示统计信息
                             st.subheader("📊 预测统计")
                             col1, col2, col3 = st.columns(3)
+                            total_valid = len(sequences)
+                            pig_virus_count = sum(1 for r in results if r['prediction'] == 0)
                             with col1:
-                                total_valid = len(sequences)
                                 st.metric("有效序列数", total_valid)
                             with col2:
-                                pig_virus_count = sum(1 for r in results if r['prediction'] == 0)
                                 st.metric("猪肠道病毒", pig_virus_count)
                             with col3:
-                                non_pig_count = total_valid - pig_virus_count
-                                st.metric("非猪肠道病毒", non_pig_count)
+                                st.metric("非猪肠道病毒", total_valid - pig_virus_count)
 
                             st.success(f"✅ 预测完成! 耗时: {elapsed_time:.2f} 秒")
-
-                            # 显示结果预览
                             st.subheader("🔍 结果预览")
                             st.dataframe(output_df.head(10))
 
-                            # 下载结果
                             csv = output_df.to_csv(index=False).encode('utf-8')
                             st.download_button(
                                 label="📥 下载完整结果 (CSV)",
@@ -538,8 +465,6 @@ def main():
                                 type="primary"
                             )
 
-                            # 可视化
-                            st.subheader("📈 结果分布")
                             import matplotlib.pyplot as plt
                             fig, ax = plt.subplots(figsize=(10, 6))
                             class_counts = output_df[output_df['Prediction'] != "无效序列"]['Class'].value_counts()
@@ -549,14 +474,12 @@ def main():
                             ax.set_xlabel('类别', fontsize=12)
                             ax.set_ylabel('数量', fontsize=12)
                             ax.tick_params(axis='x', rotation=0)
-                            # 添加数据标签
                             for i, v in enumerate(class_counts.values):
                                 ax.text(i, v + 0.5, str(v), ha='center', fontweight='bold')
                             st.pyplot(fig)
 
             except Exception as e:
                 st.error(f"❌ 处理文件时出错: {str(e)}")
-                st.exception(e)
 
 
 if __name__ == "__main__":
