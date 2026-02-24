@@ -179,7 +179,7 @@ class ESMFeatureExtractor:
         try:
             if torch.cuda.is_available():
                 print("🚀 尝试加载GPU模型（ESM-2 35M）...")
-                self.gpu_model, alphabet = esm.pretrained.esm2_t6_35M_UR50D()  # 替换为 35M 模型
+                self.gpu_model, alphabet = esm.pretrained.esm2_t12_35M_UR50D()  # 替换为 35M 模型
                 self.gpu_device = torch.device('cuda')
                 self.gpu_model = self.gpu_model.to(self.gpu_device)
                 self.gpu_batch_converter = alphabet.get_batch_converter()
@@ -189,7 +189,7 @@ class ESMFeatureExtractor:
             print(f"❌ GPU模型加载失败: {e}")
         try:
             print("🖥️ 加载CPU模型作为备用...")
-            self.cpu_model, alphabet = esm.pretrained.esm2_t6_35M_UR50D()  # 替换为 35M 模型
+            self.cpu_model, alphabet = esm.pretrained.esm2_t12_35M_UR50D()  # 替换为 35M 模型
             self.cpu_device = torch.device('cpu')
             self.cpu_model = self.cpu_model.to(self.cpu_device)
             self.cpu_batch_converter = alphabet.get_batch_converter()
