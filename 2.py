@@ -13,8 +13,9 @@ import matplotlib.pyplot as plt
 import warnings
 warnings.filterwarnings('ignore')
 
+
 # ==========================================
-# 1. 核心模型架构 
+# 1. 核心模型架构 (与训练代码完全一致)
 # ==========================================
 class CNNBranch(nn.Module):
     def __init__(self, input_dim=480, num_classes=8): # 修改 input_dim
@@ -37,8 +38,10 @@ class CNNBranch(nn.Module):
         )
         self.classifier = nn.Linear(128, num_classes)
 
+
     def forward(self, x):
         return self.classifier(self.net(x).flatten(1))
+
 
 class TransformerBranch(nn.Module):
     def __init__(self, input_dim=480, d_model=256, nhead=8, num_classes=8): # 修改 input_dim
@@ -48,9 +51,11 @@ class TransformerBranch(nn.Module):
         self.transformer = nn.TransformerEncoder(layer, num_layers=4)
         self.classifier = nn.Linear(d_model, num_classes)
 
+
     def forward(self, x):
         x = self.embedding(x).unsqueeze(1)
         return self.classifier(self.transformer(x).squeeze(1))
+
 
 class MambaBranch(nn.Module):
     def __init__(self, input_dim=480, num_classes=8): # 修改 input_dim
@@ -60,11 +65,13 @@ class MambaBranch(nn.Module):
         self.norm = nn.LayerNorm(256)
         self.classifier = nn.Linear(256, num_classes)
 
+
     def forward(self, x):
         x = self.preprocess(x).unsqueeze(1)
         for block in self.mamba_blocks:
             x = x + block(x)
         return self.classifier(self.norm(x).squeeze(1))
+
 
 class MutualLearningModel(nn.Module):
     def __init__(self, input_dim=480, num_classes=8, embed_dim=128): # 修改 input_dim
@@ -109,6 +116,7 @@ class MutualLearningModel(nn.Module):
             nn.GELU()
         )
 
+
     def forward(self, x):
         o1, o2, o3 = self.cnn(x), self.trans(x), self.mamba(x)
         branches = torch.stack([o1, o2, o3], dim=1)
@@ -123,6 +131,7 @@ class MutualLearningModel(nn.Module):
         o_fused = (branches * weights).sum(dim=1)
         return o1, o2, o3, o_fused + self.refine(o_fused)
 
+
 # ==========================================
 # 2. ESM 特征提取器
 # ==========================================
@@ -135,11 +144,12 @@ class ESMFeatureExtractor:
         self.device = None
         self._initialize_models()
 
+
     def _initialize_models(self):
         try:
             if torch.cuda.is_available():
                 print("🚀 尝试加载GPU模型（ESM-2 35M）...")
-                self.gpu_model, alphabet = esm.pretrained.esm2_t12_35M_UR50D() # 替换为 35M 模型
+                self.gpu_model, alphabet = esm.pretrained.esm2_t6_35M_UR50D() # 替换为 35M 模型
                 self.gpu_device = torch.device('cuda')
                 self.gpu_model = self.gpu_model.to(self.gpu_device)
                 self.gpu_batch_converter = alphabet.get_batch_converter()
@@ -149,7 +159,7 @@ class ESMFeatureExtractor:
             print(f"❌ GPU模型加载失败: {e}")
         try:
             print("🖥️ 加载CPU模型作为备用...")
-            self.cpu_model, alphabet = esm.pretrained.esm2_t12_35M_UR50D() # 替换为 35M 模型
+            self.cpu_model, alphabet = esm.pretrained.esm2_t6_35M_UR50D() # 替换为 35M 模型
             self.cpu_device = torch.device('cpu')
             self.cpu_model = self.cpu_model.to(self.cpu_device)
             self.cpu_batch_converter = alphabet.get_batch_converter()
@@ -160,11 +170,13 @@ class ESMFeatureExtractor:
             print(f"❌ CPU模型加载失败: {e}")
             raise
 
+
     def _extract_batch_features(self, batch_data, use_gpu=True):
         try:
             model = self.gpu_model if use_gpu and self.gpu_model else self.cpu_model
             batch_converter = self.gpu_batch_converter if use_gpu and self.gpu_model else self.cpu_batch_converter
             device = self.gpu_device if use_gpu and self.gpu_model else self.cpu_device
+
 
             _, _, batch_tokens = batch_converter(batch_data)
             batch_tokens = batch_tokens.to(device)
@@ -173,6 +185,7 @@ class ESMFeatureExtractor:
                 token_representations = results["representations"][6] # 修改为第6层
             seq_lengths = (batch_tokens != model.alphabet.padding_idx).sum(1)
             batch_features = [token_representations[i, :seq_lengths[i]].mean(0).cpu().numpy() for i in range(token_representations.size(0))]
+
 
             del batch_tokens, results
             if torch.cuda.is_available():
@@ -183,11 +196,13 @@ class ESMFeatureExtractor:
                 return self._extract_batch_features(batch_data, use_gpu=False)
             raise
 
+
     def extract_features(self, sequences, cache_path=None, batch_size=1):
         if cache_path and os.path.exists(cache_path):
             print(f"📂 从缓存加载特征: {cache_path}")
             with open(cache_path, 'rb') as f:
                 return pickle.load(f)
+
 
         features = []
         for i in range(0, len(sequences), batch_size):
@@ -195,14 +210,17 @@ class ESMFeatureExtractor:
             batch_data = [(str(idx), seq) for idx, seq in enumerate(batch)]
             features.extend(self._extract_batch_features(batch_data))
 
+
             if (i // batch_size) % 10 == 0:
                 print(f"📊 进度: {min(i+batch_size, len(sequences))}/{len(sequences)}")
+
 
         features_array = np.array(features)
         if cache_path:
             with open(cache_path, 'wb') as f:
                 pickle.dump(features_array, f)
         return features_array
+
 
 # ==========================================
 # 3. CSV处理专用函数
@@ -220,6 +238,7 @@ def validate_sequence(seq):
         return False, "序列太长 (最多10000个氨基酸)"
     return True, ""
 
+
 def validate_csv_sequences(sequences, seq_names):
     """验证CSV中的序列，返回有效序列索引和错误信息"""
     valid_indices = []
@@ -232,6 +251,7 @@ def validate_csv_sequences(sequences, seq_names):
             errors.append((seq_names[i], message))
     return valid_indices, errors
 
+
 def parse_csv_sequences(uploaded_file):
     """
     解析上传的CSV文件，智能识别序列列和名称列
@@ -241,17 +261,20 @@ def parse_csv_sequences(uploaded_file):
         df = pd.read_csv(uploaded_file)
         st.success(f"✅ 成功读取CSV文件，共 {len(df)} 行 {len(df.columns)} 列")
 
+
         # 查找序列列（不区分大小写）
         seq_col = None
         name_col = None
         possible_seq_cols = ['sequence', 'seq', 'protein_sequence', 'aa_sequence', 'peptide', 'protein']
         possible_name_cols = ['name', 'id', 'protein_id', 'identifier', 'accession', 'entry']
 
+
         # 查找序列列
         for col in df.columns:
             if col.lower() in possible_seq_cols:
                 seq_col = col
                 break
+
 
         # 如果未找到，尝试查找包含"seq"的列
         if seq_col is None:
@@ -260,17 +283,20 @@ def parse_csv_sequences(uploaded_file):
                     seq_col = col
                     break
 
+
         # 查找名称列
         for col in df.columns:
             if col.lower() in possible_name_cols:
                 name_col = col
                 break
 
+
         # 如果仍未找到序列列，报错
         if seq_col is None:
             st.error("❌ 未检测到序列列。请确保CSV包含以下列名之一：'Sequence', 'Seq', 'Protein_Sequence'等")
             st.info("💡 提示：列名不区分大小写，且需包含蛋白质氨基酸序列")
             return None, None, None, None, None
+
 
         # 提取序列（清理空格和NaN）
         sequences = []
@@ -280,6 +306,7 @@ def parse_csv_sequences(uploaded_file):
                 sequences.append(None)
             else:
                 sequences.append(str(seq).strip().upper())
+
 
         # 生成名称列表
         if name_col is not None:
@@ -292,21 +319,26 @@ def parse_csv_sequences(uploaded_file):
         else:
             seq_names = [f"Seq_{i+1}" for i in range(len(sequences))]
 
+
         # 过滤空序列
         valid_indices = [i for i, seq in enumerate(sequences) if seq is not None and len(seq.strip()) > 0]
         filtered_names = [seq_names[i] for i in valid_indices]
         filtered_seqs = [sequences[i] for i in valid_indices]
 
+
         name_display = "自动编号" if name_col is None else f'"{name_col}"'
         st.info(f"🔍 检测到序列列: '{seq_col}' | 名称列: {name_display}")
         st.info(f"✅ 有效序列数量: {len(filtered_seqs)} / {len(sequences)}")
 
+
         return filtered_names, filtered_seqs, df, seq_col, name_col
+
 
     except Exception as e:
         st.error(f"❌ 解析CSV文件失败: {str(e)}")
         st.info("💡 请确保文件是有效的CSV格式，且包含蛋白质序列列")
         return None, None, None, None, None
+
 
 # ==========================================
 # 4. 模型加载
@@ -317,6 +349,7 @@ def load_model_and_scaler():
     import numpy as np
     import numpy.core.multiarray
     import sklearn.preprocessing._data
+
 
     safe_globals = [
         np.core.multiarray.scalar,
@@ -331,13 +364,16 @@ def load_model_and_scaler():
         except Exception as e:
             st.warning(f"无法添加安全全局变量: {str(e)}")
 
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     st.info(f"使用设备: {device}")
+
 
     model_path = "best_multiclass_model.pth"
     if not os.path.exists(model_path):
         st.error(f"模型文件 {model_path} 未找到！请确保文件在当前目录中。")
         st.stop()
+
 
     try:
         checkpoint = torch.load(model_path, map_location=device, weights_only=True)
@@ -349,23 +385,26 @@ def load_model_and_scaler():
             st.error(f"❌ 两种加载方式都失败: {str(e2)}")
             st.stop()
 
+
     virus_map = checkpoint.get('virus_map', {
-        0: "Porcine Epidemic Diarrhea Virus（PEDV）",
-        1: "Transmissible Gastroenteritis Virus（TGEV）",
-        2: "Porcine Rotavirus（PoRV）",
-        3: "Porcine Delta Coronavirus （PDCoV）",
-        4: "Porcine Sapelo virus（PSV）",
-        5: "Porcine Astrovirus（PAstV）",
-        6: "Porcine Norovirus（PoNoV）",
-        7: "Swine Acute Diarrhea Syndrome Coronavirus（SADS-Cov）"
+        0: "Adenovirus",
+        1: "Herpesvirus",
+        2: "Orthomyxovirus",
+        3: "Papillomavirus",
+        4: "Picornavirus",
+        5: "Polyomavirus",
+        6: "Rotavirus",
+        7: "Coronavirus"
     })
     st.info(f"病毒类别映射: {', '.join(virus_map.values())}")
+
 
     model = MutualLearningModel(input_dim=480, num_classes=8).to(device) # 修改 input_dim
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     scaler = checkpoint['scaler']
     return model, scaler, virus_map, device
+
 
 # ==========================================
 # 5. 预测和可视化函数
@@ -393,6 +432,7 @@ def predict(model, scaler, sequences, device, virus_map):
             })
     return results
 
+
 def create_probability_chart(probs, virus_map, title="类别概率分布"):
     """使用纯matplotlib创建概率分布图"""
     fig, ax = plt.subplots(figsize=(10, 5))
@@ -415,6 +455,7 @@ def create_probability_chart(probs, virus_map, title="类别概率分布"):
     plt.tight_layout()
     return fig
 
+
 # ==========================================
 # 6. Streamlit 应用主函数
 # ==========================================
@@ -430,6 +471,7 @@ def main():
     请上传包含蛋白质序列的CSV文件或直接输入单条序列进行预测。
     """)
 
+
     with st.spinner("⏳ 加载模型和相关组件..."):
         try:
             model, scaler, virus_map, device = load_model_and_scaler()
@@ -437,9 +479,12 @@ def main():
             st.error(f"加载模型时发生严重错误: {str(e)}")
             st.stop()
 
+
     st.success("✅ 模型加载成功！")
 
+
     tab1, tab2, tab3 = st.tabs(["🔬 单序列预测", "📁 批量预测 (CSV)", "ℹ️ 关于模型"])
+
 
     with tab1:
         st.header("单序列预测")
@@ -448,6 +493,7 @@ def main():
             height=150,
             placeholder="例如: MAFSAEDVLKEYDRRRRMEALLLSLYYPNDRKLLDYKEWSPPRVQVECPKAPVEWNNPPSEKGLIVGHF..."
         )
+
 
         if st.button("🚀 预测", type="primary", use_container_width=True):
             if not sequence_input.strip():
@@ -461,6 +507,7 @@ def main():
                         start_time = time.time()
                         results = predict(model, scaler, [sequence_input], device, virus_map)
                         elapsed_time = time.time() - start_time
+
 
                     res = results[0]
                     st.subheader("🎯 预测结果")
@@ -480,11 +527,13 @@ def main():
                         )
                         st.pyplot(fig)
 
+
                     st.subheader("📊 详细概率")
                     prob_df = pd.DataFrame({
                         '病毒家族': [virus_map[i] for i in range(8)],
                         '概率': res['probabilities'] # 保留为 float
                     }).sort_values('概率', ascending=False).reset_index(drop=True)
+
 
                     # 安全格式化：仅对数值列应用格式
                     st.dataframe(
@@ -492,12 +541,14 @@ def main():
                         use_container_width=True
                     )
 
+
     with tab2:
         st.header("批量预测 (CSV格式)")
         st.markdown("""
         **上传包含蛋白质序列的CSV文件**
         ✅ 必需列: 包含氨基酸序列的列（列名如 `Sequence`, `Protein_Sequence`, `seq` 等）
         ✅ 可选列: 序列标识列（列名如 `Name`, `ID`, `Accession` 等）
+
 
         **CSV示例:**
         ```csv
@@ -507,24 +558,29 @@ def main():
         ```
         """)
 
+
         uploaded_file = st.file_uploader(
             "📤 上传CSV文件 (包含Sequence列)",
             type=["csv"],
             help="CSV文件必须包含蛋白质序列列，列名可为Sequence/Seq/Protein_Sequence等"
         )
 
+
         if uploaded_file is not None:
             seq_names, sequences, raw_df, seq_col, name_col = parse_csv_sequences(uploaded_file)
             if sequences is None or len(sequences) == 0:
                 st.stop()
 
+
             with st.expander("🔍 CSV数据预览 (前10行)"):
                 preview_df = raw_df.head(10).copy()
                 st.dataframe(preview_df, use_container_width=True)
 
+
             name_info = "未检测到名称列，将使用自动编号" if name_col is None else f"名称列: {name_col}"
             st.caption(f"检测到序列列: '{seq_col}' | {name_info}")
             st.info(f"📊 共检测到 {len(sequences)} 个有效序列")
+
 
             if st.button("🚀 开始批量预测", type="primary", use_container_width=True):
                 valid_indices, errors = validate_csv_sequences(sequences, seq_names)
@@ -536,8 +592,10 @@ def main():
                         st.write(f"... 还有 {len(errors)-10} 个错误未显示")
                     st.stop()
 
+
                 if len(valid_indices) > 50:
                     st.warning(f"⚠️ 您上传了 {len(valid_indices)} 个序列，处理可能需要较长时间")
+
 
                 with st.spinner(f"⏳ 正在预测 {len(valid_indices)} 个序列..."):
                     start_time = time.time()
@@ -545,6 +603,7 @@ def main():
                     valid_names = [seq_names[i] for i in valid_indices]
                     results = predict(model, scaler, valid_seqs, device, virus_map)
                     total_time = time.time() - start_time
+
 
                 # ====== 修复核心：保留数值类型，不在构建时转字符串 ======
                 results_data = []
@@ -559,10 +618,13 @@ def main():
                         row[virus_map[j]] = res['probabilities'][j] # 关键修复：不转字符串
                     results_data.append(row)
 
+
                 results_df = pd.DataFrame(results_data)
+
 
                 st.subheader("📈 预测结果汇总")
                 st.caption(f"⏱️ 总耗时: {total_time:.2f} 秒 | 平均: {total_time/len(valid_indices):.2f} 秒/序列")
+
 
                 # ====== 安全格式化：显式构建格式化字典 ======
                 format_dict = {'置信度': '{:.2%}'} # 置信度显示为百分比
@@ -571,9 +633,11 @@ def main():
                     if col not in ['序列名称', '预测病毒', '置信度']:
                         format_dict[col] = '{:.4f}'
 
+
                 # 应用格式化（添加 na_rep 处理潜在缺失值）
                 styled_df = results_df.style.format(format_dict, na_rep='N/A')
                 st.dataframe(styled_df, use_container_width=True)
+
 
                 st.subheader("📊 可视化选项")
                 col1, col2 = st.columns(2)
@@ -582,6 +646,7 @@ def main():
                 with col2:
                     if len(valid_names) > 1:
                         show_details = st.checkbox("查看单个序列详细分布")
+
 
                 if show_chart and len(valid_indices) <= 20:
                     fig, ax = plt.subplots(figsize=(12, 6))
@@ -599,6 +664,7 @@ def main():
                     plt.tight_layout()
                     st.pyplot(fig)
 
+
                 if show_details and len(valid_names) > 1:
                     selected_seq = st.selectbox(
                         "选择要查看详细分布的序列",
@@ -613,6 +679,7 @@ def main():
                     )
                     st.pyplot(fig)
 
+
                 # 下载保留原始数值（小数形式，便于后续分析）
                 csv = results_df.to_csv(index=False).encode('utf-8')
                 st.download_button(
@@ -623,24 +690,28 @@ def main():
                     use_container_width=True
                 )
 
+
     with tab3:
         st.header("ℹ️ 关于模型")
         st.markdown("""
         ### 🧠 模型架构
         - **三分支融合架构**: CNN + Transformer + Mamba
         - **自适应门控融合**: 动态加权整合三个分支的预测
+        - **输入特征**: ESM-2 (35M) 提取的480维蛋白质表示
+
 
         ### 🦠 支持的病毒家族 (8类)
         | 编号 | 病毒家族 | 常见代表 |
         |------|----------|----------|
-        | 0 | Porcine Epidemic Diarrhea Virus（PEDV）               | 猪流行性腹泻病毒 |
-        | 1 | Transmissible Gastroenteritis Virus（TGEV）           | 猪传染性胃肠炎病毒 |
-        | 2 | Porcine Rotavirus（PoRV）                             | 猪轮状病毒 |
-        | 3 | Porcine Delta Coronavirus （PDCoV）                   | 猪德尔塔冠状病毒|
-        | 4 | Porcine Sapelo virus（PSV）                           | 猪萨佩罗病毒 |
-        | 5 | Porcine Astrovirus（PAstV）                           | 猪星状病毒 |
-        | 6 | Porcine Norovirus（PoNoV                              | 猪诺如病毒 |
-        | 7 | Swine Acute Diarrhea Syndrome Coronavirus（SADS-Cov） | 猪急性腹泻综合征冠状病毒 |
+        | 0 | Adenovirus | 腺病毒 |
+        | 1 | Herpesvirus | 疱疹病毒 |
+        | 2 | Orthomyxovirus | 流感病毒 |
+        | 3 | Papillomavirus | 人乳头瘤病毒 |
+        | 4 | Picornavirus | 肠道病毒 |
+        | 5 | Polyomavirus | 多瘤病毒 |
+        | 6 | Rotavirus | 轮状病毒 |
+        | 7 | Coronavirus | 冠状病毒 |
+
 
         ### 📊 CSV上传说明
         - **必需列**: 包含氨基酸序列的列（自动识别常见列名）
@@ -648,11 +719,13 @@ def main():
         - **错误处理**: 自动跳过空序列，详细报告无效序列
         - **名称处理**: 优先使用ID列，无ID时自动生成序列名称
 
+
         ### 🔒 安全说明
         - 模型加载使用 PyTorch `weights_only=True` 安全模式
         - 通过 `torch.serialization.add_safe_globals()` 安全加载 StandardScaler
         - 所有预测在本地完成，数据不会上传到外部服务器
-        
+
+
         ### 📦 依赖要求
         ```bash
         pip install streamlit torch esm mamba-ssm pandas numpy scikit-learn matplotlib
