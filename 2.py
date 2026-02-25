@@ -14,7 +14,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # ==========================================
-# 1. 核心模型架构 (与训练代码完全一致)
+# 1. 核心模型架构 
 # ==========================================
 class CNNBranch(nn.Module):
     def __init__(self, input_dim=480, num_classes=8): # 修改 input_dim
@@ -350,14 +350,14 @@ def load_model_and_scaler():
             st.stop()
 
     virus_map = checkpoint.get('virus_map', {
-        0: "Adenovirus",
-        1: "Herpesvirus",
-        2: "Orthomyxovirus",
-        3: "Papillomavirus",
-        4: "Picornavirus",
-        5: "Polyomavirus",
-        6: "Rotavirus",
-        7: "Coronavirus"
+        0: "Porcine Epidemic Diarrhea Virus（PEDV）",
+        1: "Transmissible Gastroenteritis Virus（TGEV）",
+        2: "Porcine Rotavirus（PoRV）",
+        3: "Porcine Delta Coronavirus （PDCoV）",
+        4: "Porcine Sapelo virus（PSV）",
+        5: "Porcine Astrovirus（PAstV）",
+        6: "Porcine Norovirus（PoNoV）",
+        7: "Swine Acute Diarrhea Syndrome Coronavirus（SADS-Cov）"
     })
     st.info(f"病毒类别映射: {', '.join(virus_map.values())}")
 
@@ -629,19 +629,18 @@ def main():
         ### 🧠 模型架构
         - **三分支融合架构**: CNN + Transformer + Mamba
         - **自适应门控融合**: 动态加权整合三个分支的预测
-        - **输入特征**: ESM-2 (35M) 提取的480维蛋白质表示
 
         ### 🦠 支持的病毒家族 (8类)
         | 编号 | 病毒家族 | 常见代表 |
         |------|----------|----------|
-        | 0 | Adenovirus | 腺病毒 |
-        | 1 | Herpesvirus | 疱疹病毒 |
-        | 2 | Orthomyxovirus | 流感病毒 |
-        | 3 | Papillomavirus | 人乳头瘤病毒 |
-        | 4 | Picornavirus | 肠道病毒 |
-        | 5 | Polyomavirus | 多瘤病毒 |
-        | 6 | Rotavirus | 轮状病毒 |
-        | 7 | Coronavirus | 冠状病毒 |
+        | 0 | Porcine Epidemic Diarrhea Virus（PEDV）               | 猪流行性腹泻病毒 |
+        | 1 | Transmissible Gastroenteritis Virus（TGEV）           | 猪传染性胃肠炎病毒 |
+        | 2 | Porcine Rotavirus（PoRV）                             | 猪轮状病毒 |
+        | 3 | Porcine Delta Coronavirus （PDCoV）                   | 猪德尔塔冠状病毒|
+        | 4 | Porcine Sapelo virus（PSV）                           | 猪萨佩罗病毒 |
+        | 5 | Porcine Astrovirus（PAstV）                           | 猪星状病毒 |
+        | 6 | Porcine Norovirus（PoNoV                              | 猪诺如病毒 |
+        | 7 | Swine Acute Diarrhea Syndrome Coronavirus（SADS-Cov） | 猪急性腹泻综合征冠状病毒 |
 
         ### 📊 CSV上传说明
         - **必需列**: 包含氨基酸序列的列（自动识别常见列名）
@@ -649,16 +648,6 @@ def main():
         - **错误处理**: 自动跳过空序列，详细报告无效序列
         - **名称处理**: 优先使用ID列，无ID时自动生成序列名称
 
-        ### 🔒 安全说明
-        - 模型加载使用 PyTorch `weights_only=True` 安全模式
-        - 通过 `torch.serialization.add_safe_globals()` 安全加载 StandardScaler
-        - 所有预测在本地完成，数据不会上传到外部服务器
-
-        ### 📦 依赖要求
-        ```bash
-        pip install streamlit torch esm mamba-ssm pandas numpy scikit-learn matplotlib
-        ```
-        """)
 
 if __name__ == "__main__":
     main()
