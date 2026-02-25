@@ -649,15 +649,7 @@ def main():
         - **错误处理**: 自动跳过空序列，详细报告无效序列
         - **名称处理**: 优先使用ID列，无ID时自动生成序列名称
 
-        ### 🔒 安全说明
-        - 模型加载使用 PyTorch `weights_only=True` 安全模式
-        - 通过 `torch.serialization.add_safe_globals()` 安全加载 StandardScaler
-        - 所有预测在本地完成，数据不会上传到外部服务器
-
-        ### 📦 依赖要求
-        ```bash
-        pip install streamlit torch esm mamba-ssm pandas numpy scikit-learn matplotlib
-        ```
+        
         """)
 
 if __name__ == "__main__":
