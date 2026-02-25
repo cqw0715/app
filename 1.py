@@ -391,8 +391,8 @@ def main():
                 sequence = ''.join([aa for aa in sequence if aa in 'ACDEFGHIKLMNPQRSTVWYX'])
                 if len(sequence) < 10:
                     st.error("❌ 序列长度过短，请输入至少10个氨基酸的序列")
-                elif len(sequence) > 5000:
-                    st.error("❌ 序列长度过长，最大支持5000个氨基酸")
+                elif len(sequence) > 10000:
+                    st.error("❌ 序列长度过长，最大支持10000个氨基酸")
                 else:
                     # 进行预测
                     results = predict_sequences([sequence])
