@@ -350,7 +350,7 @@ def load_model_and_scaler():
             st.stop()
 
     virus_map = checkpoint.get('virus_map', {
-        0: "Adenovirus",
+        0: "PEDV",
         1: "Herpesvirus",
         2: "Orthomyxovirus",
         3: "Papillomavirus",
@@ -634,7 +634,7 @@ def main():
         ### 🦠 支持的病毒家族 (8类)
         | 编号 | 病毒家族 | 常见代表 |
         |------|----------|----------|
-        | 0 | Adenovirus | 腺病毒 |
+        | 0 | PEDV | Porcine Epidemic Diarrhea Virus |
         | 1 | Herpesvirus | 疱疹病毒 |
         | 2 | Orthomyxovirus | 流感病毒 |
         | 3 | Papillomavirus | 人乳头瘤病毒 |
