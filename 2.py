@@ -703,14 +703,14 @@ def main():
         ### 🦠 支持的病毒家族 (8类)
         | 编号 | 病毒家族 | 常见代表 |
         |------|----------|----------|
-        | 0 | Porcine Epidemic Diarrhea Virus (PEDV) | 猪流行性腹泻病毒 |
-        | 1 | Transmissible Gastroenteritis Virus (TGEV) | 猪传染性胃肠炎病毒 |
-        | 2 | Porcine Rotavirus (PoRV) | 猪轮状病毒 |
-        | 3 | Porcine Delta Coronavirus (PDCoV) | 猪德尔塔冠状病毒|
-        | 4 | Porcine Sapelo virus (PSV) | 猪萨佩罗病毒 |
-        | 5 | Porcine Astrovirus (PAstV) | 猪星状病毒 |
-        | 6 | Porcine Norovirus (PoNoV) | 猪诺如病毒 |
-        | 7 | Swine Acute Diarrhea Syndrome Coronavirus (SADS-Cov) | 猪急性腹泻综合征冠状病毒 |
+        | 0 |Porcine Epidemic Diarrhea Virus (PEDV)| 猪流行性腹泻病毒 |
+        | 1 |Transmissible Gastroenteritis Virus (TGEV)| 猪传染性胃肠炎病毒 |
+        | 2 |Porcine Rotavirus (PoRV)| 猪轮状病毒 |
+        | 3 |Porcine Delta Coronavirus (PDCoV)| 猪德尔塔冠状病毒|
+        | 4 |Porcine Sapelo virus (PSV)| 猪萨佩罗病毒 |
+        | 5 |Porcine Astrovirus (PAstV)| 猪星状病毒 |
+        | 6 |Porcine Norovirus (PoNoV)| 猪诺如病毒 |
+        | 7 |Swine Acute Diarrhea Syndrome Coronavirus (SADS-Cov)| 猪急性腹泻综合征冠状病毒 |
 
 
         ### 📊 CSV上传说明
