@@ -20,7 +20,7 @@ original_set_page_config(
 # 应用标题
 st.title("🦠 猪肠道病毒预测系统V1.O功能展示版")
 st.markdown("""
-<div style="background-color: #f0f2f6; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+<div style="background-color: #f0f2f6; padding: 50px; border-radius: 10px; margin-bottom: 20px;">
     <h3>🔬 系统简介</h3>
     <p>本平台整合了两种病毒预测模型:</p>
     <ul>
