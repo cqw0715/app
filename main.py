@@ -73,7 +73,7 @@ st.markdown("""
 <div style="background-color: #f0f2f6; padding: 15px; border-radius: 20px; margin-bottom: 30px; width: 100%; max-width: 1200px; margin-left: auto; margin-right: auto;">
     <p><center>
     <b>注</b>：由于模型运行在服务器CPU上，会导致运行错误，本系统仅展示相关系统功能，<br>
-    并且该服务器只有1G的内存，而ESM-2 650M需要2G以上的内存，由于内存不足，该系统使用的是ESM-3 35M版本；<br>
+    并且该服务器只有1G的内存，而ESM-2 650M需要3G以上的内存，由于内存不足，该系统使用的是ESM-3 35M版本；<br>
     但满血版预测系统可在本地进行部署，请参考（github）进行本地部署</center></p>
 </div>
 </div>
