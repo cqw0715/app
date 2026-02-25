@@ -386,15 +386,15 @@ def load_model_and_scaler():
             st.stop()
 
 
-    virus_map = checkpoint.get('virus_map', {
-        0: "Adenovirus",
-        1: "Herpesvirus",
-        2: "Orthomyxovirus",
-        3: "Papillomavirus",
-        4: "Picornavirus",
-        5: "Polyomavirus",
-        6: "Rotavirus",
-        7: "Coronavirus"
+     virus_map = checkpoint.get('virus_map', {
+        0: "Porcine Epidemic Diarrhea Virus（PEDV）",
+        1: "Transmissible Gastroenteritis Virus（TGEV）",
+        2: "Porcine Rotavirus（PoRV）",
+        3: "Porcine Delta Coronavirus （PDCoV）",
+        4: "Porcine Sapelo virus（PSV）",
+        5: "Porcine Astrovirus（PAstV）",
+        6: "Porcine Norovirus（PoNoV）",
+        7: "Swine Acute Diarrhea Syndrome Coronavirus（SADS-Cov）"
     })
     st.info(f"病毒类别映射: {', '.join(virus_map.values())}")
 
