@@ -307,7 +307,6 @@ def main():
     <li><b>类别0</b>: 猪肠道病毒</li>
     <li><b>类别1</b>: 非猪肠道病毒</li>
     </ul>
-    <p>模型基于ESM-2 35M特征提取器和多分支融合架构，提供高精度的预测结果。</p>
     </div>
     """, unsafe_allow_html=True)
 
