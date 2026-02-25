@@ -474,7 +474,7 @@ def main():
                         seq = str(row['Sequence']).strip().upper()
                         # 仅保留标准氨基酸
                         seq_clean = ''.join([aa for aa in seq if aa in 'ACDEFGHIKLMNPQRSTVWYX'])
-                        if len(seq_clean) >= 10 and len(seq_clean) <= 5000:
+                        if len(seq_clean) >= 10 and len(seq_clean) <= 10000:
                             sequences.append(seq_clean)
                             valid_indices.append(idx)
 
