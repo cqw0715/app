@@ -70,7 +70,7 @@ run_model(tab1, "1.py", "model_pev")
 run_model(tab2, "2.py", "model_multiclass")
 
 st.markdown("""
-<div style="background-color: #f0f2f6;">
+<div style="background-color: #f0f2f6; padding: 15px; border-radius: 20px; margin-bottom: 30px; width: 85%; max-width: 1200px; margin-left: auto; margin-right: auto;">
     <p><center>
     <b>注</b>：由于模型运行在服务器CPU上，会导致运行错误，本系统仅展示相关系统功能，<br>
     并且该服务器只有1G的内存，而ESM-2 650M需要2G以上的内存，由于内存不足，该系统使用的是ESM-3 35M版本；<br>
