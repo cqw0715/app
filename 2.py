@@ -350,14 +350,14 @@ def load_model_and_scaler():
             st.stop()
 
     virus_map = checkpoint.get('virus_map', {
-        0: "Adenovirus",
-        1: "Herpesvirus",
-        2: "Orthomyxovirus",
-        3: "Papillomavirus",
-        4: "Picornavirus",
-        5: "Polyomavirus",
-        6: "Rotavirus",
-        7: "Coronavirus"
+        0: "PEDV",
+        1: "TGEV",
+        2: "PoRV",
+        3: "PDCoV",
+        4: "PSV",
+        5: "PAstV",
+        6: "PoNoV",
+        7: "SADS-Cov"
     })
     st.info(f"病毒类别映射: {', '.join(virus_map.values())}")
 
@@ -634,14 +634,14 @@ def main():
         ### 🦠 支持的病毒家族 (8类)
         | 编号 | 病毒家族 | 常见代表 |
         |------|----------|----------|
-        | 0 | Adenovirus | 腺病毒 |
-        | 1 | Herpesvirus | 疱疹病毒 |
-        | 2 | Orthomyxovirus | 流感病毒 |
-        | 3 | Papillomavirus | 人乳头瘤病毒 |
-        | 4 | Picornavirus | 肠道病毒 |
-        | 5 | Polyomavirus | 多瘤病毒 |
-        | 6 | Rotavirus | 轮状病毒 |
-        | 7 | Coronavirus | 冠状病毒 |
+        | 0 | PEDV | Porcine Epidemic Diarrhea Virus |
+        | 1 | TGEV | Transmissible Gastroenteritis Virus |
+        | 2 | PoRV | Porcine Rotavirus |
+        | 3 | PDCoV | Porcine Delta Coronavirus |
+        | 4 | PSV | Porcine Sapelo virus |
+        | 5 | PAstV | Porcine Astrovirus |
+        | 6 | PoNoV | Porcine Norovirus |
+        | 7 | SADS-Cov | Swine Acute Diarrhea Syndrome Coronavirus |
 
         ### 📊 CSV上传说明
         - **必需列**: 包含氨基酸序列的列（自动识别常见列名）
