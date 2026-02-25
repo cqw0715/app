@@ -80,7 +80,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("""
-<div style="background-color: #f0f2f6;">
+<div style="background-color: #f0f2f6; padding: 15px; border-radius: 20px; margin-bottom: 30px; width: 85%; max-width: 1200px; margin-left: auto; margin-right: auto;">
     <p><center>
     经费充足时会考虑租借更好的服务器
     </center></p>
