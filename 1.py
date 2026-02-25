@@ -12,7 +12,7 @@ from typing import List, Tuple, Optional, Union
 from tqdm import tqdm
 
 # ==========================================
-# 模型架构定义（与训练时保持一致）
+# 模型架构定义
 # ==========================================
 import torch.nn as nn
 import torch.nn.functional as F
@@ -34,7 +34,7 @@ except ImportError:
 
 
 class CNNBranch(nn.Module):
-    def __init__(self, input_dim=480, num_classes=2):  # 修改 input_dim
+    def __init__(self, input_dim=480, num_classes=2):  # input_dim
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(input_dim, 256),
@@ -60,7 +60,7 @@ class CNNBranch(nn.Module):
 
 
 class TransformerBranch(nn.Module):
-    def __init__(self, input_dim=480, d_model=256, nhead=8, num_classes=2):  # 修改 input_dim
+    def __init__(self, input_dim=480, d_model=256, nhead=8, num_classes=2):  # input_dim
         super().__init__()
         self.embedding = nn.Linear(input_dim, d_model)
         layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, batch_first=True, dropout=0.2)
@@ -92,7 +92,7 @@ class MambaBranch(nn.Module):
 
 
 class MutualLearningModel(nn.Module):
-    def __init__(self, input_dim=480, num_classes=2, embed_dim=128):  # 修改 input_dim
+    def __init__(self, input_dim=480, num_classes=2, embed_dim=128):  # input_dim
         super().__init__()
         self.cnn = CNNBranch(input_dim, num_classes)
         self.trans = TransformerBranch(input_dim, num_classes=num_classes)
@@ -164,7 +164,7 @@ class MutualLearningModel(nn.Module):
 
 
 # ==========================================
-# 特征提取类（修复缓存问题）
+# 特征提取类
 # ==========================================
 class ESMFeatureExtractor:
     def __init__(self):
@@ -315,7 +315,8 @@ def main():
     with st.sidebar:
         st.header("⚙️ 系统设置")
         st.markdown("### 模型信息")
-        st.info("深度学习融合模型\n(ESM-2 + CNN + Transformer + Mamba)")
+        st.info("特征提取方法\n(ESM-2)")
+        st.info("参与融合模型\n(CNN + Transformer + Mamba)")
         st.markdown("### 使用说明")
         st.markdown("""
         1. **单序列预测**: 在输入框中粘贴蛋白质序列
@@ -388,7 +389,7 @@ def main():
             else:
                 # 预处理序列 - 只保留标准氨基酸
                 sequence = ''.join(filter(str.isalpha, sequence_input.strip().upper()))
-                sequence = ''.join([aa for aa in sequence if aa in 'ACDEFGHIKLMNPQRSTVWY'])
+                sequence = ''.join([aa for aa in sequence if aa in 'ACDEFGHIKLMNPQRSTVWYX'])
                 if len(sequence) < 10:
                     st.error("❌ 序列长度过短，请输入至少10个氨基酸的序列")
                 elif len(sequence) > 5000:
@@ -473,7 +474,7 @@ def main():
                     for idx, row in df.iterrows():
                         seq = str(row['Sequence']).strip().upper()
                         # 仅保留标准氨基酸
-                        seq_clean = ''.join([aa for aa in seq if aa in 'ACDEFGHIKLMNPQRSTVWY'])
+                        seq_clean = ''.join([aa for aa in seq if aa in 'ACDEFGHIKLMNPQRSTVWYX'])
                         if len(seq_clean) >= 10 and len(seq_clean) <= 5000:
                             sequences.append(seq_clean)
                             valid_indices.append(idx)
