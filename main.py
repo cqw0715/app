@@ -78,7 +78,7 @@ st.markdown("""
     但满血版预测系统可在本地进行部署，请参考（github）进行本地部署</p>
 </div>
 </div>
-
+""", unsafe_allow_html=True)
 # 页脚
 st.markdown("---")
 st.markdown("""
