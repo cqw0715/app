@@ -20,7 +20,7 @@ original_set_page_config(
 # 应用标题
 st.title("🦠 猪肠道病毒预测系统V1.O功能展示版")
 st.markdown("""
-<div style="background-color: #f0f2f6; padding: 20px; border-radius: 10px; margin-bottom: 10px;">
+<div style="background-color: #f0f2f6; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
     <h3>🔬 系统简介</h3>
     <p>本平台整合了两种病毒预测模型:</p>
     <ul>
@@ -29,10 +29,9 @@ st.markdown("""
     </ul>
     <p>选择标签页切换不同预测系统，每个系统保持其原始功能和界面。</p>
 </div>
-<div style="background-color: #f0f2f6; padding: 20px; border-radius: 10px; margin-bottom: 10px;">
-    <p><b>注</b>：由于模型运行在服务器CPU上，会导致运行错误，本系统仅展示相关系统功能，<br>
-    但满血版预测系统可在本地进行部署，请参考（github）进行本地部署</p>
-</div>
+
+
+
 """, unsafe_allow_html=True)
 
 # 创建标签页
@@ -72,6 +71,13 @@ def run_model(tab, model_file, model_name):
 # 在各自的标签页中运行模型
 run_model(tab1, "1.py", "model_pev")
 run_model(tab2, "2.py", "model_multiclass")
+
+st.markdown("""
+<div style="background-color: #f0f2f6; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+    <p><b>注</b>：由于模型运行在服务器CPU上，会导致运行错误，本系统仅展示相关系统功能，<br>
+    但满血版预测系统可在本地进行部署，请参考（github）进行本地部署</p>
+</div>
+</div>
 
 # 页脚
 st.markdown("---")
