@@ -12,27 +12,28 @@ def dummy_set_page_config(*args, **kwargs):
 
 # 设置主页面配置
 original_set_page_config(
-    page_title="病毒预测系统整合平台",
+    page_title="猪肠道病毒预测系统",
     page_icon="🦠",
     layout="wide"
 )
 
 # 应用标题
-st.title("🦠 病毒预测系统整合平台")
+st.title("🦠 猪肠道病毒预测系统V1.O功能展示版")
 st.markdown("""
 <div style="background-color: #f0f2f6; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
     <h3>🔬 系统简介</h3>
     <p>本平台整合了两种病毒预测模型:</p>
     <ul>
         <li><b>猪肠道病毒二分类模型</b>: 识别序列是否为猪肠道病毒</li>
-        <li><b>主肠道病毒多分类模型</b>: 识别8种不同病毒家族</li>
+        <li><b>猪肠道病毒多分类模型</b>: 识别8种不同病毒类型</li>
     </ul>
     <p>选择标签页切换不同预测系统，每个系统保持其原始功能和界面。</p>
+    <p>由于模型运行在服务器CPU上，会导致运行错误，本系统仅展示相关系统功能，但满血版预测系统可在本地进行部署，请参考（github）进行本地部署</p>
 </div>
 """, unsafe_allow_html=True)
 
 # 创建标签页
-tab1, tab2 = st.tabs(["🐷 猪肠道病毒二分类模型", "🦠 主肠道病毒多分类模型"])
+tab1, tab2 = st.tabs(["🐷 猪肠道病毒二分类模型", "🦠 猪肠道病毒多分类模型"])
 
 # 加载并运行模型的函数
 def run_model(tab, model_file, model_name):
@@ -73,6 +74,6 @@ run_model(tab2, "2.py", "model_multiclass")
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #666; padding: 10px;">
-    <p>病毒预测系统整合平台 &copy; 2024 | 本平台仅调用原始模型，不修改其功能</p>
+    <p>猪肠道病毒预测系统V1.0 &copy; 2026 | 安徽农业大学 人工智能学院</p>
 </div>
 """, unsafe_allow_html=True)
