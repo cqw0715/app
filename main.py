@@ -77,25 +77,6 @@ def run_model(tab, model_file, model_name):
 run_model(tab1, "1.py", "model_pev")
 run_model(tab2, "2.py", "model_multiclass")
 
-st.markdown("""
-<div style="background-color: #f0f2f6; padding: 15px; border-radius: 20px; margin-bottom: 30px; width: 100%; max-width: 1200px; margin-left: auto; margin-right: auto;">
-    <p><center>
-    <b>注</b>：由于模型运行在服务器CPU上，会导致运行错误，本系统仅展示相关系统功能，<br>
-    并且该服务器只有1G的内存，而ESM-2 650M需要3G以上的内存，由于内存不足，该系统使用的是ESM-3 35M版本；<br>
-    但满血版预测系统可在本地进行部署，请参考（github）进行本地部署</center></p>
-</div>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("""
-<div style="background-color: #f0f2f6; padding: 15px; border-radius: 20px; margin-bottom: 30px; width: 100%; max-width: 1200px; margin-left: auto; margin-right: auto;">
-    <p><center>
-    经费充足时会考虑租借更好的服务器以满足在线识别的需求
-    </center></p>
-</div>
-</div>
-""", unsafe_allow_html=True)
-
 # 页脚
 st.markdown("---")
 st.markdown("""
