@@ -30,14 +30,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("""
-<div style="background-color: #f0f2f6; padding: 15px; border-radius: 20px; margin-bottom: 30px; width: 100%; max-width: 1200px; margin-left: auto; margin-right: auto;">
-    <p><center>
-    请选择标签页切换不同预测系统
-    </center></p>
-</div>
-</div>
-""", unsafe_allow_html=True)
 
 # 创建标签页
 tab1, tab2 = st.tabs(["🐷 猪肠道病毒二分类模型", "🦠 猪肠道病毒多分类模型"])
