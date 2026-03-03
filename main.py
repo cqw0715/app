@@ -33,7 +33,7 @@ st.markdown("""
 st.markdown("""
 <div style="background-color: #f0f2f6; padding: 15px; border-radius: 20px; margin-bottom: 30px; width: 100%; max-width: 1200px; margin-left: auto; margin-right: auto;">
     <p><center>
-    请选择标签页切换至不同猪肠道病毒预测任务模块
+    **请选择标签页切换至不同猪肠道病毒预测任务模块**
     </center></p>
 </div>
 </div>
