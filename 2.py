@@ -420,13 +420,13 @@ def create_probability_chart(probs, virus_map, title="类别概率分布"):
 # ==========================================
 def main():
     st.set_page_config(
-        page_title="病毒蛋白分类器",
+        page_title="猪肠道病毒蛋白分类器",
         page_icon="🦠",
         layout="wide"
     )
-    st.title("🦠 病毒蛋白多分类预测系统")
+    st.title("🦠 猪肠道病毒蛋白质序列多分类识别系统")
     st.markdown("""
-    该系统使用深度学习模型对病毒蛋白序列进行分类，支持8种病毒家族的识别。
+    该系统使用深度学习模型对**猪肠道病毒**蛋白序列进行分类，支持**8**种常见的猪肠道病毒亚型的识别。
     请上传包含蛋白质序列的CSV文件或直接输入单条序列进行预测。
     """)
 
