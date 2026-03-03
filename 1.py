@@ -291,14 +291,14 @@ def load_model_and_scaler():
 def main():
     # 页面配置
     st.set_page_config(
-        page_title="猪肠道病毒识别系统",
+        page_title="猪肠道病毒预测识别系统",
         page_icon="🐷",
         layout="wide",
         initial_sidebar_state="expanded"
     )
 
     # 应用标题和说明
-    st.title("🐷 猪肠道病毒识别系统")
+    st.title("🦠 猪肠道病毒蛋白质序列二分类预测系统")
     st.markdown("""
     <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
     <h3>🔬 系统说明</h3>
