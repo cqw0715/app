@@ -332,7 +332,7 @@ def load_model_and_scaler():
             st.warning(f"无法添加安全全局变量: {str(e)}")
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    st.info(f"使用设备: {device}")
+    st.info(f"Using device: {device}")
 
     model_path = "best_multiclass_model.pth"
     if not os.path.exists(model_path):
@@ -359,7 +359,7 @@ def load_model_and_scaler():
         6: "PoNoV",
         7: "SADS-Cov"
     })
-    st.info(f"病毒类别映射: {', '.join(virus_map.values())}")
+    # st.info(f"病毒类别映射: {', '.join(virus_map.values())}")
 
     model = MutualLearningModel(input_dim=480, num_classes=8).to(device) # 修改 input_dim
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -424,10 +424,9 @@ def main():
         page_icon="🦠",
         layout="wide"
     )
-    st.title("🦠 猪肠道病毒蛋白质序列多分类识别系统")
+    st.title("🦠 Porcine Intestinal Virus Protein Sequence Multi-Classification System")
     st.markdown("""
-    该系统使用深度学习模型对**猪肠道病毒**蛋白序列进行分类，支持**8**种常见的猪肠道病毒亚型的识别。
-    请上传包含蛋白质序列的CSV文件或直接输入单条序列进行预测。
+    This system uses the DynML_Net model to classify porcine intestinal virus protein sequences, supporting the identification of 8 common porcine intestinal virus subtypes.
     """)
 
     with st.spinner("⏳ 加载模型和相关组件..."):
