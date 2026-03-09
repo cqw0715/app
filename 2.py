@@ -269,6 +269,7 @@ def parse_csv_sequences(uploaded_file):
         # 如果仍未找到序列列，报错
         if seq_col is None:
             st.error("❌ No sequence column detected. Please ensure the CSV contains one of the following column names: 'Sequence', 'Seq', 'Protein_Sequence', etc.")
+            st.info("💡 Tip: Column names are case-insensitive and must contain protein amino acid sequences.")
             return None, None, None, None, None
 
         # 提取序列（清理空格和NaN）
