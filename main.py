@@ -12,7 +12,7 @@ def dummy_set_page_config(*args, **kwargs):
 
 # 设置主页面配置
 original_set_page_config(
-    page_title="猪肠道病毒预测系统",
+    page_title="Virus Prediction and Identification System Integration Platform",
     page_icon="🦠",
     layout="wide"
 )
