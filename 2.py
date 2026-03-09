@@ -11,13 +11,14 @@ from sklearn.preprocessing import StandardScaler
 import time
 import matplotlib.pyplot as plt
 import warnings
+import pickle # Added missing import for pickle
 warnings.filterwarnings('ignore')
 
 # ==========================================
-# 1. 核心模型架构 (与训练代码完全一致)
+# 1. Core Model Architecture (Identical to training code)
 # ==========================================
 class CNNBranch(nn.Module):
-    def __init__(self, input_dim=480, num_classes=8): # 修改 input_dim
+    def __init__(self, input_dim=480, num_classes=8): # Modified input_dim
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(input_dim, 256),
@@ -41,7 +42,7 @@ class CNNBranch(nn.Module):
         return self.classifier(self.net(x).flatten(1))
 
 class TransformerBranch(nn.Module):
-    def __init__(self, input_dim=480, d_model=256, nhead=8, num_classes=8): # 修改 input_dim
+    def __init__(self, input_dim=480, d_model=256, nhead=8, num_classes=8): # Modified input_dim
         super().__init__()
         self.embedding = nn.Linear(input_dim, d_model)
         layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, batch_first=True, dropout=0.2)
@@ -53,7 +54,7 @@ class TransformerBranch(nn.Module):
         return self.classifier(self.transformer(x).squeeze(1))
 
 class MambaBranch(nn.Module):
-    def __init__(self, input_dim=480, num_classes=8): # 修改 input_dim
+    def __init__(self, input_dim=480, num_classes=8): # Modified input_dim
         super().__init__()
         self.preprocess = nn.Linear(input_dim, 256)
         self.mamba_blocks = nn.ModuleList([Mamba(d_model=256, d_state=16, d_conv=4, expand=2) for _ in range(5)])
@@ -67,7 +68,7 @@ class MambaBranch(nn.Module):
         return self.classifier(self.norm(x).squeeze(1))
 
 class MutualLearningModel(nn.Module):
-    def __init__(self, input_dim=480, num_classes=8, embed_dim=128): # 修改 input_dim
+    def __init__(self, input_dim=480, num_classes=8, embed_dim=128): # Modified input_dim
         super().__init__()
         self.cnn = CNNBranch(input_dim, num_classes)
         self.trans = TransformerBranch(input_dim, num_classes=num_classes)
@@ -124,7 +125,7 @@ class MutualLearningModel(nn.Module):
         return o1, o2, o3, o_fused + self.refine(o_fused)
 
 # ==========================================
-# 2. ESM 特征提取器
+# 2. ESM Feature Extractor
 # ==========================================
 class ESMFeatureExtractor:
     def __init__(self):
@@ -138,26 +139,26 @@ class ESMFeatureExtractor:
     def _initialize_models(self):
         try:
             if torch.cuda.is_available():
-                print("🚀 尝试加载GPU模型（ESM-2 35M）...")
-                self.gpu_model, alphabet = esm.pretrained.esm2_t6_35M_UR50D() # 替换为 35M 模型
+                print("🚀 Attempting to load GPU model (ESM-2 35M)...")
+                self.gpu_model, alphabet = esm.pretrained.esm2_t6_35M_UR50D() # Replaced with 35M model
                 self.gpu_device = torch.device('cuda')
                 self.gpu_model = self.gpu_model.to(self.gpu_device)
                 self.gpu_batch_converter = alphabet.get_batch_converter()
                 self.device = self.gpu_device
-                print("✅ GPU模型加载成功")
+                print("✅ GPU model loaded successfully")
         except Exception as e:
-            print(f"❌ GPU模型加载失败: {e}")
+            print(f"❌ GPU model loading failed: {e}")
         try:
-            print("🖥️ 加载CPU模型作为备用...")
-            self.cpu_model, alphabet = esm.pretrained.esm2_t6_35M_UR50D() # 替换为 35M 模型
+            print("🖥️ Loading CPU model as fallback...")
+            self.cpu_model, alphabet = esm.pretrained.esm2_t6_35M_UR50D() # Replaced with 35M model
             self.cpu_device = torch.device('cpu')
             self.cpu_model = self.cpu_model.to(self.cpu_device)
             self.cpu_batch_converter = alphabet.get_batch_converter()
             if self.device is None:
                 self.device = self.cpu_device
-            print("✅ CPU模型加载成功")
+            print("✅ CPU model loaded successfully")
         except Exception as e:
-            print(f"❌ CPU模型加载失败: {e}")
+            print(f"❌ CPU model loading failed: {e}")
             raise
 
     def _extract_batch_features(self, batch_data, use_gpu=True):
@@ -169,8 +170,8 @@ class ESMFeatureExtractor:
             _, _, batch_tokens = batch_converter(batch_data)
             batch_tokens = batch_tokens.to(device)
             with torch.no_grad():
-                results = model(batch_tokens, repr_layers=[6], return_contacts=False) # 修改为第6层
-                token_representations = results["representations"][6] # 修改为第6层
+                results = model(batch_tokens, repr_layers=[6], return_contacts=False) # Modified to layer 6
+                token_representations = results["representations"][6] # Modified to layer 6
             seq_lengths = (batch_tokens != model.alphabet.padding_idx).sum(1)
             batch_features = [token_representations[i, :seq_lengths[i]].mean(0).cpu().numpy() for i in range(token_representations.size(0))]
 
@@ -185,7 +186,7 @@ class ESMFeatureExtractor:
 
     def extract_features(self, sequences, cache_path=None, batch_size=1):
         if cache_path and os.path.exists(cache_path):
-            print(f"📂 从缓存加载特征: {cache_path}")
+            print(f"📂 Loading features from cache: {cache_path}")
             with open(cache_path, 'rb') as f:
                 return pickle.load(f)
 
@@ -196,7 +197,7 @@ class ESMFeatureExtractor:
             features.extend(self._extract_batch_features(batch_data))
 
             if (i // batch_size) % 10 == 0:
-                print(f"📊 进度: {min(i+batch_size, len(sequences))}/{len(sequences)}")
+                print(f"📊 Progress: {min(i+batch_size, len(sequences))}/{len(sequences)}")
 
         features_array = np.array(features)
         if cache_path:
@@ -205,23 +206,23 @@ class ESMFeatureExtractor:
         return features_array
 
 # ==========================================
-# 3. CSV处理专用函数
+# 3. CSV Processing Functions
 # ==========================================
 def validate_sequence(seq):
-    """验证蛋白质序列"""
+    """Validate protein sequence"""
     seq = seq.strip().upper()
     valid_aa = set("ACDEFGHIKLMNPQRSTVWYX")
     invalid_chars = [c for c in seq if c not in valid_aa]
     if invalid_chars:
-        return False, f"无效字符: {', '.join(set(invalid_chars))}"
+        return False, f"Invalid characters: {', '.join(set(invalid_chars))}"
     if len(seq) < 10:
-        return False, "序列太短 (至少需要10个氨基酸)"
+        return False, "Sequence too short (minimum 10 amino acids required)"
     if len(seq) > 10000:
-        return False, "序列太长 (最多10000个氨基酸)"
+        return False, "Sequence too long (maximum 10,000 amino acids)"
     return True, ""
 
 def validate_csv_sequences(sequences, seq_names):
-    """验证CSV中的序列，返回有效序列索引和错误信息"""
+    """Validate sequences in CSV, return valid indices and error messages"""
     valid_indices = []
     errors = []
     for i, seq in enumerate(sequences):
@@ -234,46 +235,46 @@ def validate_csv_sequences(sequences, seq_names):
 
 def parse_csv_sequences(uploaded_file):
     """
-    解析上传的CSV文件，智能识别序列列和名称列
-    返回: (序列名称列表, 序列列表, 原始DataFrame, 序列列名, 名称列名)
+    Parse uploaded CSV file, intelligently identify sequence and name columns.
+    Returns: (List of sequence names, List of sequences, Raw DataFrame, Sequence column name, Name column name)
     """
     try:
         df = pd.read_csv(uploaded_file)
         st.success(f"✅ Successfully read CSV file: {len(df)} rows, {len(df.columns)} columns")
 
-        # 查找序列列（不区分大小写）
+        # Find sequence column (case-insensitive)
         seq_col = None
         name_col = None
         possible_seq_cols = ['sequence', 'seq', 'protein_sequence', 'aa_sequence', 'peptide', 'protein']
         possible_name_cols = ['name', 'id', 'protein_id', 'identifier', 'accession', 'entry']
 
-        # 查找序列列
+        # Find sequence column
         for col in df.columns:
             if col.lower() in possible_seq_cols:
                 seq_col = col
                 break
 
-        # 如果未找到，尝试查找包含"seq"的列
+        # If not found, try to find column containing "seq"
         if seq_col is None:
             for col in df.columns:
                 if 'seq' in col.lower() or 'sequence' in col.lower():
                     seq_col = col
                     break
 
-        # 查找名称列
+        # Find name column
         for col in df.columns:
             if col.lower() in possible_name_cols:
                 name_col = col
                 break
 
-        # 如果仍未找到序列列，报错
+        # If sequence column still not found, show error
         if seq_col is None:
             st.error("❌ No sequence column detected. Please ensure the CSV contains one of the following column names: 'Sequence', 'Seq', 'Protein_Sequence', etc.")
             st.info("💡 Tip: Column names are case-insensitive and must contain protein amino acid sequences.")
             return None, None, None, None, None
 
-        # 提取序列（清理空格和NaN）
-       sequences = []
+        # Extract sequences (clean spaces and NaNs)
+        sequences = []
         for idx, seq in enumerate(df[seq_col]):
             if pd.isna(seq) or str(seq).strip() == "":
                 st.warning(f"⚠️ Row {idx+1} has an empty sequence and will be skipped.")
@@ -281,7 +282,7 @@ def parse_csv_sequences(uploaded_file):
             else:
                 sequences.append(str(seq).strip().upper())
 
-        # 生成名称列表
+        # Generate name list
         if name_col is not None:
             seq_names = []
             for idx, name in enumerate(df[name_col]):
@@ -292,7 +293,7 @@ def parse_csv_sequences(uploaded_file):
         else:
             seq_names = [f"Seq_{i+1}" for i in range(len(sequences))]
 
-        # 过滤空序列
+        # Filter empty sequences
         valid_indices = [i for i, seq in enumerate(sequences) if seq is not None and len(seq.strip()) > 0]
         filtered_names = [seq_names[i] for i in valid_indices]
         filtered_seqs = [sequences[i] for i in valid_indices]
@@ -309,11 +310,11 @@ def parse_csv_sequences(uploaded_file):
         return None, None, None, None, None
 
 # ==========================================
-# 4. 模型加载
+# 4. Model Loading
 # ==========================================
 @st.cache_resource
 def load_model_and_scaler():
-    """加载模型和标准化器，使用缓存提高性能"""
+    """Load model and scaler, using cache for performance"""
     import numpy as np
     import numpy.core.multiarray
     import sklearn.preprocessing._data
@@ -329,24 +330,24 @@ def load_model_and_scaler():
         try:
             torch.serialization.add_safe_globals([obj])
         except Exception as e:
-            st.warning(f"无法添加安全全局变量: {str(e)}")
+            st.warning(f"Unable to add safe global: {str(e)}")
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     st.info(f"Using device: {device}")
 
     model_path = "best_multiclass_model.pth"
     if not os.path.exists(model_path):
-        st.error(f"模型文件 {model_path} 未找到！请确保文件在当前目录中。")
+        st.error(f"Model file {model_path} not found! Please ensure the file is in the current directory.")
         st.stop()
 
     try:
         checkpoint = torch.load(model_path, map_location=device, weights_only=True)
-        st.success("✅ 模型安全加载成功 (使用weights_only=True)")
+        st.success("✅ Model loaded safely (using weights_only=True)")
     except Exception as e:
         try:
             checkpoint = torch.load(model_path, map_location=device, weights_only=False)
         except Exception as e2:
-            st.error(f"❌ 两种加载方式都失败: {str(e2)}")
+            st.error(f"❌ Both loading methods failed: {str(e2)}")
             st.stop()
 
     virus_map = checkpoint.get('virus_map', {
@@ -359,25 +360,25 @@ def load_model_and_scaler():
         6: "PoNoV",
         7: "SADS-Cov"
     })
-    # st.info(f"病毒类别映射: {', '.join(virus_map.values())}")
+    st.info(f"Virus class mapping: {', '.join(virus_map.values())}")
 
-    model = MutualLearningModel(input_dim=480, num_classes=8).to(device) # 修改 input_dim
+    model = MutualLearningModel(input_dim=480, num_classes=8).to(device) # Modified input_dim
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     scaler = checkpoint['scaler']
     return model, scaler, virus_map, device
 
 # ==========================================
-# 5. 预测和可视化函数
+# 5. Prediction and Visualization Functions
 # ==========================================
 def predict(model, scaler, sequences, device, virus_map):
-    """进行预测"""
+    """Perform prediction"""
     extractor = ESMFeatureExtractor()
-    st.info("🧬 正在提取ESM-2特征，请稍候...")
+    st.info("🧬 Extracting ESM-2 features, please wait...")
     features = extractor.extract_features(sequences)
-    st.info("⚖️ 标准化特征...")
+    st.info("⚖️ Normalizing features...")
     scaled_features = scaler.transform(features)
-    st.info("🧠 进行预测...")
+    st.info("🧠 Performing prediction...")
     model.eval()
     results = []
     with torch.no_grad():
@@ -393,15 +394,15 @@ def predict(model, scaler, sequences, device, virus_map):
             })
     return results
 
-def create_probability_chart(probs, virus_map, title="类别概率分布"):
-    """使用纯matplotlib创建概率分布图"""
+def create_probability_chart(probs, virus_map, title="Class Probability Distribution"):
+    """Create probability distribution chart using pure matplotlib"""
     fig, ax = plt.subplots(figsize=(10, 5))
     viruses = [virus_map[i] for i in range(len(probs))]
     colors = ['red' if i == np.argmax(probs) else 'steelblue' for i in range(len(probs))]
     bars = ax.bar(viruses, probs, color=colors, edgecolor='black', linewidth=0.8)
     ax.set_ylim(0, 1.05)
     ax.set_title(title, fontsize=14, fontweight='bold')
-    ax.set_ylabel('预测概率', fontsize=12)
+    ax.set_ylabel('Prediction Probability', fontsize=12)
     ax.grid(axis='y', linestyle='--', alpha=0.3)
     for bar, prob in zip(bars, probs):
         height = bar.get_height()
@@ -416,24 +417,24 @@ def create_probability_chart(probs, virus_map, title="类别概率分布"):
     return fig
 
 # ==========================================
-# 6. Streamlit 应用主函数
+# 6. Streamlit App Main Function
 # ==========================================
 def main():
     st.set_page_config(
-        page_title="猪肠道病毒蛋白分类器",
+        page_title="Porcine Intestinal Virus Protein Classifier",
         page_icon="🦠",
         layout="wide"
     )
-    st.title("🦠 Porcine Intestinal Virus Protein Sequence Multi-Classification System")
+    st.title("🦠 Porcine Intestinal Virus Protein Sequence Multi-Classification System") 
     st.markdown("""
-    This system uses the DynML_Net model to classify porcine intestinal virus protein sequences, supporting the identification of 8 common porcine intestinal virus subtypes.
+    This system uses the DynML_Net model to classify **porcine intestinal virus** protein sequences, supporting the identification of **8** common porcine intestinal virus subtypes.
     """)
 
-    with st.spinner("⏳ 加载模型和相关组件..."):
+    with st.spinner("⏳ Loading model and related components..."):
         try:
             model, scaler, virus_map, device = load_model_and_scaler()
         except Exception as e:
-            st.error(f"加载模型时发生严重错误: {str(e)}")
+            st.error(f"Critical error occurred while loading model: {str(e)}")
             st.stop()
 
     st.success("✅ Model loaded successfully!")
@@ -466,7 +467,7 @@ def main():
                     col1, col2 = st.columns([1, 2])
                     with col1:
                         st.metric(
-                            "预测病毒家族",
+                            "Predicted Virus Family",
                             res['predicted_class'],
                             delta=f"{res['confidence']:.1%} Confidence"
                         )
@@ -485,9 +486,9 @@ def main():
                         'Probability': res['probabilities'] # Keep as float
                     }).sort_values('Probability', ascending=False).reset_index(drop=True)
 
-                    # 安全格式化：仅对数值列应用格式
+                    # Safe formatting: apply format only to numeric columns
                     st.dataframe(
-                        prob_df.style.format({'概率': '{:.4f}'}),
+                        prob_df.style.format({'Probability': '{:.4f}'}),
                         use_container_width=True
                     )
 
@@ -545,7 +546,7 @@ def main():
                     results = predict(model, scaler, valid_seqs, device, virus_map)
                     total_time = time.time() - start_time
 
-                # ====== 修复核心：保留数值类型，不在构建时转字符串 ======
+                # ====== Fix Core: Keep numeric types, do not convert to string during construction ======
                 results_data = []
                 for i, (name, res) in enumerate(zip(valid_names, results)):
                     row = {
@@ -553,9 +554,9 @@ def main():
                         'Predicted Virus': res['predicted_class'],
                         'Confidence': res['confidence'] # Keep as float
                     }
-                    # 添加所有病毒家族概率（保留为 float）
+                    # Add probabilities for all virus families (keep as float)
                     for j in range(8):
-                        row[virus_map[j]] = res['probabilities'][j] # 关键修复：不转字符串
+                        row[virus_map[j]] = res['probabilities'][j] # Key fix: do not convert to string
                     results_data.append(row)
 
                 results_df = pd.DataFrame(results_data)
@@ -563,14 +564,14 @@ def main():
                 st.subheader("📈 Prediction Summary")
                 st.caption(f"⏱️ Total Time: {total_time:.2f} s | Average: {total_time/len(valid_indices):.2f} s/seq")
 
-                # ====== 安全格式化：显式构建格式化字典 ======
+                # ====== Safe Formatting: Explicitly build format dictionary ======
                 format_dict = {'Confidence': '{:.2%}'} # Display confidence as percentage
-                # 为所有病毒家族列添加格式（排除非数值列）
+                # Add format for all virus family columns (exclude non-numeric columns)
                 for col in results_df.columns:
                     if col not in ['Sequence Name', 'Predicted Virus', 'Confidence']:
                         format_dict[col] = '{:.4f}'
 
-                # 应用格式化（添加 na_rep 处理潜在缺失值）
+                # Apply formatting (add na_rep to handle potential missing values)
                 styled_df = results_df.style.format(format_dict, na_rep='N/A')
                 st.dataframe(styled_df, use_container_width=True)
 
@@ -612,7 +613,7 @@ def main():
                     )
                     st.pyplot(fig)
 
-                # 下载保留原始数值（小数形式，便于后续分析）
+                # Download keeps original numeric values (decimal form, easy for further analysis)
                 csv = results_df.to_csv(index=False).encode('utf-8')
                 st.download_button(
                     label="📥 Download Prediction Results (CSV)",
@@ -624,9 +625,12 @@ def main():
 
     with tab3:
         st.header("ℹ️ About the Model")
-        st.markdown("""       
+        st.markdown("""
+        ### 🧠 Model Architecture
+        - **Three-Branch Fusion Architecture**: CNN + Transformer + Mamba
+        - **Adaptive Gating Fusion**: Dynamically weighted integration of predictions from three branches
 
-        ### 🐷 Supported 8 Common Porcine Intestinal Virus Types
+        ### 🦠 Supported Virus Families (8 Classes)
         | ID | Virus Family | Common Representative |
         |------|----------|----------|
         | 0 | PEDV | Porcine Epidemic Diarrhea Virus |
@@ -638,6 +642,13 @@ def main():
         | 6 | PoNoV | Porcine Norovirus |
         | 7 | SADS-Cov | Swine Acute Diarrhea Syndrome Coronavirus |
 
+        ### 📊 CSV Upload Instructions
+        - **Required Column**: Column containing amino acid sequences (common column names are automatically recognized).
+        - **Smart Recognition**: Supports various column name variants (case-insensitive).
+        - **Error Handling**: Automatically skips empty sequences and reports invalid sequences in detail.
+        - **Name Handling**: Prioritizes using the ID column; generates sequence names automatically if no ID is present.
+
+        
         """)
 
 if __name__ == "__main__":
