@@ -239,7 +239,7 @@ def parse_csv_sequences(uploaded_file):
     """
     try:
         df = pd.read_csv(uploaded_file)
-        st.success(f"✅ 成功读取CSV文件，共 {len(df)} 行 {len(df.columns)} 列")
+        st.success(f"✅ Successfully read CSV file: {len(df)} rows, {len(df.columns)} columns")
 
         # 查找序列列（不区分大小写）
         seq_col = None
@@ -268,15 +268,14 @@ def parse_csv_sequences(uploaded_file):
 
         # 如果仍未找到序列列，报错
         if seq_col is None:
-            st.error("❌ 未检测到序列列。请确保CSV包含以下列名之一：'Sequence', 'Seq', 'Protein_Sequence'等")
-            st.info("💡 提示：列名不区分大小写，且需包含蛋白质氨基酸序列")
+            st.error("❌ No sequence column detected. Please ensure the CSV contains one of the following column names: 'Sequence', 'Seq', 'Protein_Sequence', etc.")
             return None, None, None, None, None
 
         # 提取序列（清理空格和NaN）
-        sequences = []
+       sequences = []
         for idx, seq in enumerate(df[seq_col]):
             if pd.isna(seq) or str(seq).strip() == "":
-                st.warning(f"⚠️ 第 {idx+1} 行序列为空，将跳过")
+                st.warning(f"⚠️ Row {idx+1} has an empty sequence and will be skipped.")
                 sequences.append(None)
             else:
                 sequences.append(str(seq).strip().upper())
@@ -297,15 +296,15 @@ def parse_csv_sequences(uploaded_file):
         filtered_names = [seq_names[i] for i in valid_indices]
         filtered_seqs = [sequences[i] for i in valid_indices]
 
-        name_display = "自动编号" if name_col is None else f'"{name_col}"'
-        st.info(f"🔍 检测到序列列: '{seq_col}' | 名称列: {name_display}")
-        st.info(f"✅ 有效序列数量: {len(filtered_seqs)} / {len(sequences)}")
+        name_display = "Auto-numbered" if name_col is None else f'"{name_col}"'
+        st.info(f"🔍 Detected sequence column: '{seq_col}' | Name column: {name_display}")
+        st.info(f"✅ Valid sequences: {len(filtered_seqs)} / {len(sequences)}")
 
         return filtered_names, filtered_seqs, df, seq_col, name_col
 
     except Exception as e:
-        st.error(f"❌ 解析CSV文件失败: {str(e)}")
-        st.info("💡 请确保文件是有效的CSV格式，且包含蛋白质序列列")
+        st.error(f"❌ Failed to parse CSV file: {str(e)}")
+        st.info("💡 Please ensure the file is a valid CSV format and contains a protein sequence column.")
         return None, None, None, None, None
 
 # ==========================================
@@ -445,7 +444,7 @@ def main():
         sequence_input = st.text_area(
             "Enter Protein Sequence (Amino Acid Sequence)",
             height=150,
-            placeholder="例如: MAFSAEDVLKEYDRRRRMEALLLSLYYPNDRKLLDYKEWSPPRVQVECPKAPVEWNNPPSEKGLIVGHF..."
+            placeholder="e.g., MAFSAEDVLKEYDRRRRMEALLLSLYYPNDRKLLDYKEWSPPRVQVECPKAPVEWNNPPSEKGLIVGHF..."
         )
 
         if st.button("🚀 Predict", type="primary", use_container_width=True):
