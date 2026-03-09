@@ -626,16 +626,16 @@ def main():
         st.markdown("""
 
         ### 🐷 Supported 8 Common Porcine Intestinal Virus Types
-        | ID | Virus Family | Common Representative |
+        | ID | Short form | Full form |
         |------|----------|----------|
-        | 0 | PEDV | Porcine Epidemic Diarrhea Virus |
-        | 1 | TGEV | Transmissible Gastroenteritis Virus |
-        | 2 | PoRV | Porcine Rotavirus |
-        | 3 | PDCoV | Porcine Delta Coronavirus |
-        | 4 | PSV | Porcine Sapelovirus |
-        | 5 | PAstV | Porcine Astrovirus |
-        | 6 | PoNoV | Porcine Norovirus |
-        | 7 | SADS-Cov | Swine Acute Diarrhea Syndrome Coronavirus |
+        | 1 | PEDV | Porcine Epidemic Diarrhea Virus |
+        | 2 | TGEV | Transmissible Gastroenteritis Virus |
+        | 3 | PoRV | Porcine Rotavirus |
+        | 4 | PDCoV | Porcine Delta Coronavirus |
+        | 5 | PSV | Porcine Sapelovirus |
+        | 6 | PAstV | Porcine Astrovirus |
+        | 7 | PoNoV | Porcine Norovirus |
+        | 8 | SADS-Cov | Swine Acute Diarrhea Syndrome Coronavirus |
         
         """)
 
