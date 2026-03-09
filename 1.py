@@ -291,47 +291,47 @@ def load_model_and_scaler():
 def main():
     # 页面配置
     st.set_page_config(
-        page_title="猪肠道病毒预测识别系统",
+        page_title="Porcine Intestinal Virus Prediction System",
         page_icon="🐷",
         layout="wide",
         initial_sidebar_state="expanded"
     )
 
     # 应用标题和说明
-    st.title("🦠 猪肠道病毒蛋白质序列二分类预测系统")
+    st.title("🦠 Porcine Intestinal Virus Protein Sequence Binary Classification System")
     st.markdown("""
     <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
-    <h3>🔬 系统说明</h3>
-    <p>本系统使用深度学习模型对蛋白质序列进行分类，判断其是否为猪肠道病毒。</p>
+    <h3>🔬 System Description</h3>
+    <p>This system uses the DynML_Net model to classify protein sequences and determine if they are porcine intestinal viruses.</p>
     <ul>
-    <li><b>Label-0</b>: 猪肠道病毒</li>
-    <li><b>Label-1</b>: 非猪肠道病毒</li>
+    <li><b>Label-0</b>: Porcine Intestinal Virus (PEV)</li>
+    <li><b>Label-1</b>: Non-Porcine Intestinal Virus (non-PEV)</li>
     </ul>
     </div>
     """, unsafe_allow_html=True)
 
     # 侧边栏
     with st.sidebar:
-        st.header("⚙️ 系统设置")
-        st.markdown("### 模型信息")
-        st.info("特征提取方法\n:ESM-2")
-        st.info("参与融合模型\n:DynML_Net")
-        st.markdown("### 使用说明")
+        st.header("⚙️ System Settings")
+        st.markdown("### Model Information")
+        st.info("Feature Extraction Method\n:ESM-2")
+        st.info("Model Used\n:DynML_Net")
+        st.markdown("### Usage Instructions")
         st.markdown("""
-        1. **单序列预测**: 在输入框中粘贴蛋白质序列
-        2. **批量预测**: 上传包含序列的CSV文件
-        3. 查看预测结果及置信度
+        1. **Single Sequence Prediction**: Paste the protein sequence in the input box
+        2. **Batch Prediction**: Upload a CSV file containing sequences
+        3. iew prediction results and confidence scores
         """)
-        st.markdown("### 注意事项")
+        st.markdown("### Notes")
         st.warning("""
-        - 仅支持标准氨基酸字符
-        - GPU加速可显著提升处理速度
+        - Supports standard amino acid characters
+        - GPU acceleration can significantly improve processing speed
         """)
         st.warning("""
-        - 该系统仅进行功能页面展示
-        - 该服务器只有1G的内存，而ESM-2 650M需要3G以上的内存，因为由于内存不足，所以演示系统使用的是ESM-3 35M版本
-        - 由于模型运行在服务器CPU上，无GPU会导致运行错误，本系统仅展示相关系统功能，但满血版预测系统可在本地进行部署，请参考（github链接）进行本地部署
-        - 经费充足时会考虑租借更好的服务器以满足在线识别的需求
+        - Demo Purpose: This system is currently deployed solely for functional demonstration purposes.
+        - Memory Constraints: The server is equipped with only 1GB of RAM. Since the ESM-2 650M model requires over 3GB of memory, this demo utilizes the lighter ESM-3 35M version due to insufficient resources.
+        - Hardware Limitations & Local Deployment: As the model runs on the server's CPU without GPU acceleration, runtime errors may occur. This system is designed to showcase functionality only. For full-performance prediction capabilities, please deploy the system locally. Refer to our [GitHub Repository] for local deployment instructions.
+        - Future Plans: Subject to sufficient funding, we plan to lease high-performance servers to support robust online inference in the future.
         """)
 
     # 加载模型和特征提取器
@@ -348,7 +348,7 @@ def main():
             return []
 
         # 提取特征
-        with st.spinner(f"🧬 正在提取 {len(sequences)} 条序列的特征..."):
+        with st.spinner(f"🧬 Extracting features for {len(sequences)} sequences..."):
             features = feature_extractor.extract_features(sequences)
 
         # 标准化
@@ -371,39 +371,39 @@ def main():
                 'full_sequence': seq,
                 'prediction': int(pred),
                 'confidence': float(conf),
-                'class_name': "非猪肠道病毒" if pred == 1 else "猪肠道病毒"
+                'class_name': "non-PE" if pred == 1 else "PEV"
             }
             results.append(result)
         return results
 
     # 主界面 - 两种输入方式
-    input_option = st.radio("选择输入方式", ["单序列预测", "批量CSV预测"], horizontal=True)
+    input_option = st.radio("Select Input Method", ["Single Sequence Prediction", "Batch CSV Prediction"], horizontal=True)
 
-    if input_option == "单序列预测":
-        st.subheader("🔤 输入蛋白质序列")
+    if input_option == "Single Sequence Prediction":
+        st.subheader("🔤  Enter Protein Sequence")
         sequence_input = st.text_area(
-            "粘贴蛋白质序列 (仅支持标准氨基酸字符)",
+            "Paste protein sequence (supports standard amino acid characters)",
             height=150,
-            placeholder="例如: MAFSAEDVLKEYDRRRRMEALLLSLYYPNDRKLLDYKEWSPPRVQVECPKAPVEWNNPPSEKGLIVGHFSGIKYKGEKAQASEVDVNKMCCWVSKFKDAMRRYQGIQTCKIPGKVLSDLDMKHLKKADLIICAPNSYKKDDKPNQIKLLAVPTVMTKDDKQLLQEINELQDVVQDLRSLVEKNQIPAVDRAVTLTQRGELQAAGDKTLQEAVDRLQDKLQSLAEEGVKALQEELRKQLEAVDRAVTKLEQKLQDQVEALQARVDSLQAELRALQAQLAELQAELQALRSQLDELQAQLAELQAQLQALQSELQAQLSQLDELQAQLAELQAQLQALQSELQAQLSQLDELQAQLAELQAQLQALQSELQAQLSQLDELQAQLAELQAQLQ"
+            placeholder="e.g., MAFSAEDVLKEYDRRRRMEALLLSLYYPNDRKLLDYKEWSPPRVQVECPKAPVEWNNPPSEKGLIVGHFSGIKYKGEKAQASEVDVNKMCCWVSKFKDAMRRYQGIQTCKIPGKVLSDLDMKHLKKADLIICAPNSYKKDDKPNQIKLLAVPTVMTKDDKQLLQEINELQDVVQDLRSLVEKNQIPAVDRAVTLTQRGELQAAGDKTLQEAVDRLQDKLQSLAEEGVKALQEELRKQLEAVDRAVTKLEQKLQDQVEALQARVDSLQAELRALQAQLAELQAELQALRSQLDELQAQLAELQAQLQELQAQLSELQSQLDELQAQLAELQAQLQALQSELQAQLSQLDELQAQLAELQAQLQ"
         )
 
-        if st.button("🔍 开始预测", type="primary"):
+        if st.button("🔍 Start Prediction", type="primary"):
             if not sequence_input.strip():
-                st.warning("⚠️ 请输入有效的蛋白质序列")
+                st.warning("⚠️ Please enter a valid protein sequence")
             else:
                 # 预处理序列 - 只保留标准氨基酸
                 sequence = ''.join(filter(str.isalpha, sequence_input.strip().upper()))
-                sequence = ''.join([aa for aa in sequence if aa in 'ACDEFGHIKLMNPQRSTVWYX'])
+                sequence = ''.join([aa for aa in sequence if aa in 'ACDEFGHIKLMNPQRSTVWYBX'])
                 if len(sequence) < 10:
-                    st.error("❌ 序列长度过短，请输入至少10个氨基酸的序列")
+                    st.error("❌ Sequence too short, please enter a sequence with at least 10 amino acids")
                 elif len(sequence) > 10000:
-                    st.error("❌ 序列长度过长，最大支持10000个氨基酸")
+                    st.error("❌ Sequence too long, maximum supported length is 10,000 amino acid")
                 else:
                     # 进行预测
                     results = predict_sequences([sequence])
 
                     # 显示结果
-                    st.subheader("📊 预测结果")
+                    st.subheader("📊 Prediction Results")
                     result = results[0]
 
                     # 使用卡片式布局展示结果
@@ -423,12 +423,12 @@ def main():
                     """, unsafe_allow_html=True)
 
                     # 显示详细置信度
-                    st.subheader("📈 置信度分析")
+                    st.subheader("📈 Confidence Analysis")
                     col1, col2 = st.columns(2)
                     with col1:
-                        st.metric("猪肠道病毒概率", f"{1 - result['confidence']:.2%}")
+                        st.metric("PEV", f"{1 - result['confidence']:.2%}")
                     with col2:
-                        st.metric("非猪肠道病毒概率", f"{result['confidence']:.2%}")
+                        st.metric("non-PEV", f"{result['confidence']:.2%}")
 
                     # 可视化置信度
                     import matplotlib.pyplot as plt
@@ -443,33 +443,34 @@ def main():
                     st.pyplot(fig)
 
                     # 显示完整序列
-                    with st.expander("📋 查看完整序列"):
+                    with st.expander("📋 View Full Sequence"):
                         st.code(result['full_sequence'])
 
     else:  # 批量CSV预测
-        st.subheader("📁 上传CSV文件")
+        st.subheader("📁 Upload CSV File")
         st.markdown("""
-        请上传包含蛋白质序列的CSV文件，文件需包含`Sequence`列。
-        **示例格式:**
+        Please upload a CSV file containing protein sequences. The file must include a `Sequence` column.
+        
+        **Example Format:**
         ```
         ID,Sequence
         seq1,MAFSAEDVLKEYDRRRRMEALLLSLYYPNDRKLLDYKEWSPPRVQVECPKAPVEWNNPPSEKGLIVGHF
         seq2,MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTLVTTLTYGV
         ```
         """)
-        uploaded_file = st.file_uploader("选择CSV文件", type=["csv"])
+        uploaded_file = st.file_uploader("Choose CSV Fil", type=["csv"])
 
         if uploaded_file is not None:
             try:
                 # 读取CSV
                 df = pd.read_csv(uploaded_file)
                 if 'Sequence' not in df.columns:
-                    st.error("❌ CSV文件中缺少'Sequence'列")
+                    st.error("❌ 'Sequence' column missing in CSV file")
                 else:
-                    st.success(f"✅ 成功加载 {len(df)} 条序列")
+                    st.success(f"✅ Successfully loaded {len(df)} sequences")
 
                     # 预览数据
-                    with st.expander("🔍 数据预览"):
+                    with st.expander("🔍 Data Preview"):
                         st.dataframe(df.head())
 
                     # 预处理序列
@@ -478,19 +479,19 @@ def main():
                     for idx, row in df.iterrows():
                         seq = str(row['Sequence']).strip().upper()
                         # 仅保留标准氨基酸
-                        seq_clean = ''.join([aa for aa in seq if aa in 'ACDEFGHIKLMNPQRSTVWYX'])
+                        seq_clean = ''.join([aa for aa in seq if aa in 'ACDEFGHIKLMNPQRSTVWYBX'])
                         if len(seq_clean) >= 10 and len(seq_clean) <= 10000:
                             sequences.append(seq_clean)
                             valid_indices.append(idx)
 
-                    st.info(f"ℹ️ 有效序列: {len(sequences)}/{len(df)} (过滤了过短、过长或无效字符的序列)")
+                    st.info(f"ℹ️ Valid sequences: {len(sequences)}/{len(df)} (Filtered out sequences that were too short, too long, or contained invalid characters)")
 
-                    if st.button("🚀 开始批量预测", type="primary"):
+                    if st.button("🚀 Start Batch Prediction", type="primary"):
                         if not sequences:
-                            st.warning("⚠️ 没有有效的序列可以预测")
+                            st.warning("⚠️ No valid sequences to predic")
                         else:
                             # 进行预测
-                            with st.spinner(f"🧠 正在预测 {len(sequences)} 条序列..."):
+                            with st.spinner(f"🧠 Predicting {len(sequences)} sequences..."):
                                 start_time = time.time()
                                 results = predict_sequences(sequences)
                                 elapsed_time = time.time() - start_time
@@ -515,28 +516,28 @@ def main():
                                 output_df.at[idx, 'Confidence'] = row['confidence']
 
                             # 显示统计信息
-                            st.subheader("📊 预测统计")
+                            st.subheader("📊 Prediction Statistics")
                             col1, col2, col3 = st.columns(3)
                             with col1:
                                 total_valid = len(sequences)
-                                st.metric("有效序列数", total_valid)
+                                st.metric("Valid Sequences", total_valid)
                             with col2:
                                 pig_virus_count = sum(1 for r in results if r['prediction'] == 0)
-                                st.metric("猪肠道病毒", pig_virus_count)
+                                st.metric("PEV", pig_virus_count)
                             with col3:
                                 non_pig_count = total_valid - pig_virus_count
-                                st.metric("非猪肠道病毒", non_pig_count)
+                                st.metric("non-PEV", non_pig_count)
 
-                            st.success(f"✅ 预测完成! 耗时: {elapsed_time:.2f} 秒")
+                            st.success(f"✅  Prediction complete! Time elapsed: {elapsed_time:.2f} seconds")
 
                             # 显示结果预览
-                            st.subheader("🔍 结果预览")
+                            st.subheader("🔍 Results Preview")
                             st.dataframe(output_df.head(10))
 
                             # 下载结果
                             csv = output_df.to_csv(index=False).encode('utf-8')
                             st.download_button(
-                                label="📥 下载完整结果 (CSV)",
+                                label="📥 Download Full Results (CSV)",
                                 data=csv,
                                 file_name="prediction_results.csv",
                                 mime="text/csv",
@@ -544,15 +545,15 @@ def main():
                             )
 
                             # 可视化
-                            st.subheader("📈 结果分布")
+                            st.subheader("📈 Result Distribution")
                             import matplotlib.pyplot as plt
                             fig, ax = plt.subplots(figsize=(10, 6))
                             class_counts = output_df[output_df['Prediction'] != "无效序列"]['Class'].value_counts()
                             colors = ['#ff4b4b', '#1f77b4']
                             bars = class_counts.plot(kind='bar', color=colors, ax=ax)
-                            ax.set_title('预测类别分布', fontsize=16)
-                            ax.set_xlabel('类别', fontsize=12)
-                            ax.set_ylabel('数量', fontsize=12)
+                            ax.set_title('Forecast category distribution', fontsize=16)
+                            ax.set_xlabel('Category', fontsize=12)
+                            ax.set_ylabel('Quantity', fontsize=12)
                             ax.tick_params(axis='x', rotation=0)
                             # 添加数据标签
                             for i, v in enumerate(class_counts.values):
