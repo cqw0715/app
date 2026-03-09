@@ -436,7 +436,7 @@ def main():
             st.error(f"加载模型时发生严重错误: {str(e)}")
             st.stop()
 
-    st.success("✅ Model loaded safely (using weights_only=True)")
+    st.success("✅ Model loaded successfully!")
 
     tab1, tab2, tab3 = st.tabs(["🔬 Single Sequence Prediction", "📁 Batch Prediction (CSV)", "ℹ️ About Virus Types"])
 
@@ -624,12 +624,9 @@ def main():
 
     with tab3:
         st.header("ℹ️ About the Model")
-        st.markdown("""
-        ### 🧠 Model Architecture
-        - **Three-Branch Fusion Architecture**: CNN + Transformer + Mamba
-        - **Adaptive Gating Fusion**: Dynamically weighted integration of predictions from three branches
+        st.markdown("""       
 
-        ### 🦠 Supported Virus Families (8 Classes)
+        ### 🐷 Supported 8 Common Porcine Intestinal Virus Types
         | ID | Virus Family | Common Representative |
         |------|----------|----------|
         | 0 | PEDV | Porcine Epidemic Diarrhea Virus |
@@ -641,13 +638,6 @@ def main():
         | 6 | PoNoV | Porcine Norovirus |
         | 7 | SADS-Cov | Swine Acute Diarrhea Syndrome Coronavirus |
 
-        ### 📊 CSV Upload Instructions
-        - **Required Column**: Column containing amino acid sequences (common column names are automatically recognized).
-        - **Smart Recognition**: Supports various column name variants (case-insensitive).
-        - **Error Handling**: Automatically skips empty sequences and reports invalid sequences in detail.
-        - **Name Handling**: Prioritizes using the ID column; generates sequence names automatically if no ID is present.
-
-        
         """)
 
 if __name__ == "__main__":
