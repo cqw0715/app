@@ -18,14 +18,14 @@ original_set_page_config(
 )
 
 # 应用标题
-st.title("🐷 猪肠道病毒预测系统V1.O（功能展示版）")
+st.title("🐷 Porcine Enterovirus Prediction System V1.0 (Demo Version)")
 st.markdown("""
 <div style="background-color: #f0f2f6; padding: 15px; border-radius: 20px; margin-bottom: 30px; width: 100%; max-width: 1200px; margin-left: auto; margin-right: auto;">
-    <h3>🔬 系统简介</h3>
-    <p>本平台整合了两种病毒预测模型:</p>
+    <h3>🔬 System Introduction</h3>
+    <p>This platform integrates two types of prediction and identification tasks:</p>
     <ul>
-        <li><b>猪肠道病毒二分类模型</b>: 识别序列是否为猪肠道病毒</li>
-        <li><b>猪肠道病毒多分类模型</b>: 识别8种常见的猪肠道病毒类型</li>
+        <li><b>Porcine Intestinal Virus Binary Classification Model</b>: Identifies whether a protein sequence is a porcine intestinal virus</li>
+        <li><b>Porcine Intestinal Virus Multi-classification Model</b>: Identifies 8 different common types of porcine intestinal viruses</li>
     </ul>
 </div>
 """, unsafe_allow_html=True)
@@ -40,7 +40,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 创建标签页
-tab1, tab2 = st.tabs(["🦠 猪肠道病毒二分类模型", "🦠 猪肠道病毒多分类模型"])
+tab1, tab2 = st.tabs(["🦠  Porcine Intestinal Virus Binary Classification Model", "🦠 Porcine Intestinal Virus Multi-classification Model"])
 
 # 加载并运行模型的函数
 def run_model(tab, model_file, model_name):
@@ -81,6 +81,6 @@ run_model(tab2, "2.py", "model_multiclass")
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #666; padding: 10px;">
-    <p>猪肠道病毒预测识别系统（功能展示版） &copy; 2026 | 安徽农业大学 人工智能学院</p>
+    <p>Porcine Enterovirus Prediction and Identification System (Demo Version) &copy; 2026 | School of Artificial Intelligence, Anhui Agricultural University</p>
 </div>
 """, unsafe_allow_html=True)
