@@ -359,7 +359,6 @@ def load_model_and_scaler():
         6: "PoNoV",
         7: "SADS-Cov"
     })
-    st.info(f"Virus class mapping: {', '.join(virus_map.values())}")
 
     model = MutualLearningModel(input_dim=480, num_classes=8).to(device) # Modified input_dim
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -623,13 +622,10 @@ def main():
                 )
 
     with tab3:
-        st.header("ℹ️ About the Model")
+        st.header("ℹ️ About Virus Types")
         st.markdown("""
-        ### 🧠 Model Architecture
-        - **Three-Branch Fusion Architecture**: CNN + Transformer + Mamba
-        - **Adaptive Gating Fusion**: Dynamically weighted integration of predictions from three branches
 
-        ### 🦠 Supported Virus Families (8 Classes)
+        ### 🐷 Supported 8 Common Porcine Intestinal Virus Types
         | ID | Virus Family | Common Representative |
         |------|----------|----------|
         | 0 | PEDV | Porcine Epidemic Diarrhea Virus |
@@ -640,13 +636,6 @@ def main():
         | 5 | PAstV | Porcine Astrovirus |
         | 6 | PoNoV | Porcine Norovirus |
         | 7 | SADS-Cov | Swine Acute Diarrhea Syndrome Coronavirus |
-
-        ### 📊 CSV Upload Instructions
-        - **Required Column**: Column containing amino acid sequences (common column names are automatically recognized).
-        - **Smart Recognition**: Supports various column name variants (case-insensitive).
-        - **Error Handling**: Automatically skips empty sequences and reports invalid sequences in detail.
-        - **Name Handling**: Prioritizes using the ID column; generates sequence names automatically if no ID is present.
-
         
         """)
 
