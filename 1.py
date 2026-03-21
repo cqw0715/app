@@ -320,7 +320,7 @@ def main():
         st.markdown("""
         1. **Single Sequence Prediction**: Paste the protein sequence in the input box
         2. **Batch Prediction**: Upload a CSV file containing sequences
-        3. iew prediction results and confidence scores
+        3. View prediction results and confidence scores
         """)
         st.markdown("### Notes")
         st.warning("""
